@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
+<svg width="18cm" height="5cm" viewBox="319 48 356 99" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g>
+    <rect style="fill: #f58392" x="457.034" y="55.4094" width="102.05" height="70"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="457.034" y="55.4094" width="102.05" height="70"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="508.059" y="78.3094">
+      <tspan x="508.059" y="78.3094">Vulnerability</tspan>
+      <tspan x="508.059" y="94.3094">Detection</tspan>
+      <tspan x="508.059" y="110.309">Procedure</tspan>
+    </text>
+  </g>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="396.234" y="83.9794">
+    <tspan x="396.234" y="83.9794">testcase</tspan>
+  </text>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x1="559.084" y1="90.4094" x2="613.03" y2="90.4946"/>
+    <polygon style="fill: #000000" points="614.53,90.4969 612.528,91.4938 613.03,90.4946 612.531,89.4938 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="614.53,90.4969 612.528,91.4938 613.03,90.4946 612.531,89.4938 "/>
+  </g>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="564.426" y="81.8254">
+    <tspan x="564.426" y="81.8254">output</tspan>
+  </text>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x1="389.852" y1="89.8601" x2="451.062" y2="90.3606"/>
+    <polygon style="fill: #000000" points="452.562,90.3728 450.554,91.3564 451.062,90.3606 450.57,89.3565 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="452.562,90.3728 450.554,91.3564 451.062,90.3606 450.57,89.3565 "/>
+  </g>
+  <g>
+    <rect style="fill: #cacaca" x="320.428" y="59.4357" width="68.4213" height="60.3717"/>
+    <ellipse style="fill: #cacaca" cx="354.638" cy="119.807" rx="34.2106" ry="10.0619"/>
+    <ellipse style="fill: #cacaca" cx="354.638" cy="59.4357" rx="34.2106" ry="10.0619"/>
+    <ellipse style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" cx="354.638" cy="59.4357" rx="34.2106" ry="10.0619"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" d="M 388.849 59.4357 L 388.849,119.807 C 388.849,125.364 373.532,129.869 354.638,129.869 C 335.744,129.869 320.428,125.364 320.428,119.807 L 320.428,59.4357"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="354.638" y="141.869">
+      <tspan x="354.638" y="141.869">dataset</tspan>
+    </text>
+  </g>
+  <text font-size="28.2222" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="618.19" y="95.828">
+    <tspan x="618.19" y="95.828">✓|✗</tspan>
+  </text>
+  <g>
+    <g>
+      <polygon style="fill: #ffffff" points="338.904,75.92 353.844,75.92 358.824,80.9001 358.824,100.82 338.904,100.82 "/>
+      <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="338.904,75.92 353.844,75.92 358.824,80.9001 358.824,100.82 338.904,100.82 "/>
+      <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="353.844,75.92 353.844,80.9001 358.824,80.9001 358.824,80.9001 "/>
+    </g>
+    <g>
+      <polygon style="fill: #ffffff" points="342.904,84.4862 357.844,84.4862 362.824,89.4663 362.824,109.387 342.904,109.387 "/>
+      <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="342.904,84.4862 357.844,84.4862 362.824,89.4663 362.824,109.387 342.904,109.387 "/>
+      <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="357.844,84.4862 357.844,89.4663 362.824,89.4663 362.824,89.4663 "/>
+    </g>
+    <g>
+      <polygon style="fill: #ffffff" points="347.076,92.7592 362.016,92.7592 366.996,97.7393 366.996,117.66 347.076,117.66 "/>
+      <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="347.076,92.7592 362.016,92.7592 366.996,97.7393 366.996,117.66 347.076,117.66 "/>
+      <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="362.016,92.7592 362.016,97.7393 366.996,97.7393 366.996,97.7393 "/>
+    </g>
+  </g>
+</svg>

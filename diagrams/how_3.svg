@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
+<svg width="16cm" height="8cm" viewBox="367 231 314 149" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g>
+    <rect style="fill: #ffffff" x="462.966" y="232.218" width="102.05" height="70"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #7f7f7f" x="462.966" y="232.218" width="102.05" height="70"/>
+    <text font-size="12.8" style="fill: #7f7f7f;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="513.991" y="255.118">
+      <tspan x="513.991" y="255.118">Vulnerability</tspan>
+      <tspan x="513.991" y="271.118">Detection</tspan>
+      <tspan x="513.991" y="287.118">Procedure</tspan>
+    </text>
+  </g>
+  <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="424.166" y="245.788">
+    <tspan x="424.166" y="245.788">new </tspan>
+    <tspan x="424.166" y="261.788">testcase</tspan>
+  </text>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x1="565.016" y1="267.218" x2="618.962" y2="267.304"/>
+    <polygon style="fill: #000000" points="620.462,267.307 618.46,268.304 618.962,267.304 618.463,266.304 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="620.462,267.307 618.46,268.304 618.962,267.304 618.463,266.304 "/>
+  </g>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="570.358" y="258.634">
+    <tspan x="570.358" y="258.634">output</tspan>
+  </text>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x1="395.785" y1="266.67" x2="456.994" y2="267.169"/>
+    <polygon style="fill: #000000" points="458.494,267.182 456.486,268.165 456.994,267.169 456.502,266.165 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="458.494,267.182 456.486,268.165 456.994,267.169 456.502,266.165 "/>
+  </g>
+  <text font-size="28.2222" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="624.122" y="272.638">
+    <tspan x="624.122" y="272.638">✓|✗</tspan>
+  </text>
+  <g>
+    <polygon style="fill: #add8e6" points="368.008,253.568 382.948,253.568 387.928,258.548 387.928,278.468 368.008,278.468 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="368.008,253.568 382.948,253.568 387.928,258.548 387.928,278.468 368.008,278.468 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="382.948,253.568 382.948,258.548 387.928,258.548 387.928,258.548 "/>
+  </g>
+  <g>
+    <rect style="fill: #83f59d" x="473.882" y="340.3" width="84.4991" height="38"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="473.882" y="340.3" width="84.4991" height="38"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="516.132" y="363.2">
+      <tspan x="516.132" y="363.2"></tspan>
+    </text>
+  </g>
+  <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="516.132" y="363.725">
+    <tspan x="516.132" y="363.725">VDiscover</tspan>
+  </text>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="429.375,266.944 429.375,359.3 465.646,359.3 "/>
+    <polygon style="fill: #000000" points="471.646,359.3 463.646,363.3 465.646,359.3 463.646,355.3 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="471.646,359.3 463.646,363.3 465.646,359.3 463.646,355.3 "/>
+  </g>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="411.292" y="373.874">
+    <tspan x="411.292" y="373.874">features</tspan>
+  </text>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="565.044" y="373.94">
+    <tspan x="565.044" y="373.94">prediction</tspan>
+  </text>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="558.381,359.3 594.975,359.3 594.975,275.502 "/>
+    <polygon style="fill: #000000" points="594.975,269.502 598.975,277.502 594.975,275.502 590.975,277.502 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="594.975,269.502 598.975,277.502 594.975,275.502 590.975,277.502 "/>
+  </g>
+</svg>
