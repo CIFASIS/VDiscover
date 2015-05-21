@@ -1,0 +1,166 @@
+#!/usr/bin/python2
+
+"""
+This file is part of VDISCOVER.
+
+VDISCOVER is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+VDISCOVER is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with VDISCOVER. If not, see <http://www.gnu.org/licenses/>.
+
+Copyright 2014 by G.Grieco
+"""
+
+import os
+import argparse
+import csv
+import sys
+import random
+
+from vdiscover.Detection  import GetArgs, GetFiles, GetCmd
+
+# static feature extraction
+
+from vdiscover.RandomWalk import RandomWalkElf
+
+# dynamic feature extraction
+
+from vdiscover.Process    import Process
+from vdiscover.Mutation   import NullMutator, RandomByteMutator, RandomExpanderMutator, RandomInputMutator
+from vdiscover.Printer    import TypePrinter
+from vdiscover.Misc       import readmodfile
+from vdiscover.Input      import prepare_inputs
+
+
+
+
+if __name__ == "__main__":
+
+    # Random seed initialziation
+    random.seed()
+
+    # To help argparse to detect the number of columns correctly
+    os.environ['COLUMNS'] = str(os.popen('stty size', 'r').read().split()[1]) #str(shutil.get_terminal_size().columns)
+
+    # Arguments
+    parser = argparse.ArgumentParser(description='Feature extraction of VDiscover')
+    parser.add_argument("testcase", help="Testcase to analyze", type=str, default=None)
+
+    parser.add_argument("--static",
+                        help="Extract only static features from an executable",
+                        action="store_true", default=False)
+
+    parser.add_argument("--dynamic",
+                        help="Extract only dynamic features from a testcase",
+                        action="store_true", default=False)
+
+    parser.add_argument("--mclass", type=int,
+                        help="Include class column, to use later in training mode",
+                        action="store", default=None)
+
+    parser.add_argument("--out-file",
+                        help="File to output the extracted features",
+                        type=str, default="/dev/stdout")
+
+    parser.add_argument("--max-subtraces-collected", type=int,
+                        help="Maximum number of subtraces collected (static features only)", default=100)
+
+    parser.add_argument("--max-subtraces-explored", type=int,
+                        help="Maximum number of subtraces explored (static features only)", default=10000)
+
+    parser.add_argument("--min-subtrace-size", type=int,
+                        help="Minumum number of events in each subtrace collected (static features only)", default=3)
+
+    parser.add_argument("--show-stdout",
+                        help="Don't use /dev/null as stdout/stderr (dynamic features only)",
+                        action="store_true", default=False)
+
+    parser.add_argument("--inc-mods",
+                        help="Only extract features from the libraries matching the strings inside this file (dynamic features only)",
+                        type=str, default=None)
+
+    parser.add_argument("--ign-mods",
+                        help="Ignore extracted features from the libraries matching the string inside this file (dynamic features only)",
+                        type=str, default=None)
+
+    parser.add_argument("--timeout", dest="timeout", type=int,
+                        help="Timeout in seconds (dynamic features only)", default=3)
+
+    parser.add_argument("--max-mutations", type=int,
+                        help="Maximum number of mutations to the original testcase (dynamic features only)", default=0)
+
+    options = parser.parse_args()
+    testcase = options.testcase
+
+    static_only = options.static
+    dynamic_only = options.dynamic
+
+    if (not static_only and not dynamic_only) or (static_only and dynamic_only):
+      print "The feature extraction requires to select either static of dynamic features exclusively"
+      exit(-1)
+
+    max_subtraces_collected = options.max_subtraces_collected
+    max_subtraces_explored  = options.max_subtraces_explored
+    min_subtrace_size       = options.min_subtrace_size
+
+    incmodfile = options.inc_mods
+    ignmodfile = options.ign_mods
+
+    # modules to include or ignore
+    included_mods = readmodfile(incmodfile)
+    ignored_mods = readmodfile(ignmodfile)
+
+    show_stdout = options.show_stdout
+    max_mut = options.max_mutations
+    timeout = options.timeout
+    mclass = options.mclass
+
+    csvfile = options.out_file
+
+    os.chdir(testcase)
+    program = GetCmd(None)
+
+    if static_only:
+
+      RandomWalkElf(program, csvfile, mclass, max_subtraces_collected, max_subtraces_explored, min_subtrace_size)
+
+    elif dynamic_only:
+
+      os.chdir("inputs")
+
+      envs = dict()
+      args = GetArgs()
+      files = GetFiles()
+
+      original_inputs = RandomInputMutator(args + files, NullMutator)
+      expanded_input_generator = RandomInputMutator(args + files, RandomExpanderMutator)
+      mutated_input_generator = RandomInputMutator(args + files, RandomByteMutator)
+
+      app = Process(program, envs, timeout, included_mods, ignored_mods, no_stdout = not show_stdout )
+      prt = TypePrinter(csvfile, program, mclass)
+
+      # unchanged input
+      null_mutt, original_input = original_inputs.next()
+      original_events = app.getData(prepare_inputs(original_input))
+
+      if original_events is None:
+        print "Execution of",program,"failed!"
+        exit(-1)
+
+      prt.print_events(original_events)
+
+      for (i, (d, mutated)) in enumerate(expanded_input_generator):
+
+        if i >= max_mut:
+          break
+
+        events = app.getData(prepare_inputs(mutated))
+        prt.print_events(events)

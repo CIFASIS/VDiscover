@@ -1,0 +1,9 @@
+define phi(x) {
+    auto s,t,b,q,i,const
+    s=x; t=0; b=x; q=x*x; i=1
+    while(s!=t)
+        s=(t=s)+(b*=q/(i+=2))
+    const=0.5*l(8*a(1))   # 0.91893...
+    return .5+s*e(-.5*q-const)
+}
+quit

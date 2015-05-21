@@ -1,0 +1,87 @@
+#!/usr/bin/python2
+
+"""
+This file is part of VDISCOVER.
+
+VDISCOVER is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+VDISCOVER is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with VDISCOVER. If not, see <http://www.gnu.org/licenses/>.
+
+Copyright 2014 by G.Grieco
+"""
+
+import os
+import argparse
+import sys
+
+from vdiscover.Pipeline import *
+from vdiscover.Recall  import Recall
+from vdiscover.Train  import Train
+
+if __name__ == "__main__":
+
+    # Arguments
+    parser = argparse.ArgumentParser(description='A trainer and predictor of vulnerabilities')
+    parser.add_argument("infile", help="A csv with the features to train or predict", type=str, default=None)
+
+    parser.add_argument("--model", type=str,
+                        help="Use a pretrained model (recall only)",
+                        action="store", default=None)
+
+    parser.add_argument("--static",
+                        help="Use static features",
+                        action="store_true", default=False)
+
+    parser.add_argument("--dynamic",
+                        help="Use dynamic features",
+                        action="store_true", default=False)
+
+    parser.add_argument("--train",
+                        help="Train a model using infile",
+                        action="store_true", default=False)
+
+    parser.add_argument("--n-samples", type=int,
+                        help="Select a number of samples from infile (train only)",
+                        action="store", default=None)
+
+    parser.add_argument("--out-file",
+                        help="File to output the results/model",
+                        type=str, default="/dev/stdout")
+
+    options = parser.parse_args()
+    in_file = options.infile
+
+    training_mode = options.train
+    nsamples = options.n_samples
+
+    static_only = options.static
+    dynamic_only = options.dynamic
+
+    out_file = options.out_file
+    model_file = options.model
+
+    if (not static_only and not dynamic_only) or (static_only and dynamic_only):
+      print "VDiscover requires to select either static of dynamic features exclusively"
+      exit(-1)
+    elif static_only:
+      ftype = "static"
+    elif dynamic_only:
+      ftype = "dynamic"
+
+    if training_mode:
+      Train(out_file, in_file, ftype, nsamples)
+    else:
+      if model_file is None:
+        print "VDiscover requires a pre-trained model to predict"
+        exit(-1)
+
+      Recall(model_file, in_file, ftype, out_file)
