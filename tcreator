@@ -1,0 +1,83 @@
+#!/usr/bin/python2
+
+"""
+This file is part of VDISCOVER.
+
+VDISCOVER is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+VDISCOVER is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with VDISCOVER. If not, see <http://www.gnu.org/licenses/>.
+
+Copyright 2014 by G.Grieco
+"""
+
+import os
+import argparse
+import sys
+import csv
+
+from vdiscover.Detection import WriteTestcase
+
+if __name__ == "__main__":
+
+    # Arguments
+    parser = argparse.ArgumentParser(description='A trainer and predictor of vulnerabilities')
+    parser.add_argument("infile", help="A csv with the features to train or predict", type=str, default=None)
+    parser.add_argument("outdir", help="Output directory to write testcases", type=str, default=None)
+
+
+    """
+    parser.add_argument("--model", type=str,
+                        help="Use a pretrained model (recall only)",
+                        action="store", default=None)
+
+    parser.add_argument("--static",
+                        help="Use static features",
+                        action="store_true", default=False)
+
+    parser.add_argument("--dynamic",
+                        help="Use dynamic features",
+                        action="store_true", default=False)
+
+    parser.add_argument("--train",
+                        help="Train a model using infile",
+                        action="store_true", default=False)
+
+    parser.add_argument("--n-samples", type=int,
+                        help="Select a number of samples from infile (train only)",
+                        action="store", default=None)
+
+    parser.add_argument("--out-file",
+                        help="File to output the results/model",
+                        type=str, default="/dev/stdout")
+    """
+
+    options = parser.parse_args()
+    in_file = options.infile
+    out_dir= options.outdir
+
+    infile = open(in_file,"r")
+
+    try:
+      os.makedirs(out_dir)
+    except:
+      pass
+
+    os.chdir(out_dir)
+    csvreader = csv.reader(infile, delimiter='\t')
+    for i,row in enumerate(csvreader):
+      args = row[0].split(" ")
+      if len(args) == 1 or args[1] == '':
+        continue
+      #print args
+      name = args[0].replace("/","_")+":"+str(i)
+      WriteTestcase(name,args[0],args[1:])
+

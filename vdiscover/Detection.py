@@ -45,6 +45,28 @@ def GetArg(n, conc):
 
   return x
 
+def WriteTestcase(name, program, args):
+  try:
+    os.mkdir(name)
+  except:
+    pass
+
+  os.chdir(name)
+  filename = "path.txt"
+  open(filename,"w").write(program)
+  
+  try:
+    os.mkdir("inputs")
+  except:
+    pass
+
+  os.chdir("inputs")
+  for i,arg in enumerate(args):
+    filename = "argv_"+str(i+1)+".symb"
+    open(filename,"w").write(arg)
+
+  os.chdir("../..")
+   
 
 def GetArgs():
   #i = 1

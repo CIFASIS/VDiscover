@@ -13,7 +13,8 @@ VDiscover aims to be used when there is a **large** amount of testcases to analy
     cd VDiscover
     python setup.py install --user
 
-This will locally install the required python modules: [python-ptrace](https://bitbucket.org/haypo/python-ptrace/) for data collection and [scikit-learn](http://scikit-learn.org/) for training and prediction. Also [binutils](http://www.gnu.org/software/binutils/) is required.
+By default, the local installation of the command line utilities of VDiscover is performed inside ~/.local/bin, so it is recommended to add this directory into the PATH variable.
+This will also install the required python modules: [python-ptrace](https://bitbucket.org/haypo/python-ptrace/) for data collection and [scikit-learn](http://scikit-learn.org/) for training and prediction. Also [binutils](http://www.gnu.org/software/binutils/) is required.
 
 Our tool is composed by two components:
 

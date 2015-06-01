@@ -20,7 +20,15 @@ Copyright 2014 by G.Grieco
 import random
 import copy
 
+from subprocess import Popen, PIPE, STDOUT
+
 import Input
+
+def fuzz_cmd(prepared_inputs, fuzzer_cmd, seed):
+  p = Popen(fuzzer_cmd.split(" ")+[str(seed)], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+  mutated_input = p.communicate(input=prepared_inputs)[0]
+  return mutated_input.replace("\0","")[:32767]
+
 
 class DeltaMutation(object):
   def __init__(self, inp, atts):
@@ -162,61 +170,6 @@ class RandomByteMutator(Mutator):
   def GetDelta(self):
     return self.delta
 
-"""
-class SurpriseMutator(Mutator):
-
-  max_expansion = 10000
-
-  def __iter__(self):
-    return self
-
-  def next(self):
-
-    assert(self.input_len > 0)
-
-    input = self.input.copy()
-    delta = str(self.input.GetType())+" "
- 
-    m = random.sample(["s","e"],1)[0]
-    #delta = delta 
-
-    if "s" in m:
-      # single byte mutation
-      i = random.randrange(self.input_len)
-      m = self.array[random.randrange(self.array_len)]
-      input.data = input.data[:i] + m + input.data[i+1:]
-      
-
-      #print i, self.input_len, i/float(self.input_len)
-      rpos = int(i/(float(self.input_len))*100.0) 
-      delta = OneByteDeltaMutation(input, dict(pos = rpos, old = ord(self.input.data[i]), new=ord(m))) 
-      #delta = delta + "mod" + " " + "pos="+str(i) + " " + "old=" + str(ord(self.input.data[i]))+ " " + "new=" + str(ord(m))
-
-    if "e" in m:
-      # expansion mutation
-      i = random.randrange(self.input_len)
-      j = random.randrange(self.max_expansion)
-      m = self.array[random.randrange(self.array_len)]
-      #delta = delta + "exp" + " " + "pos=" + str(i) + " " + "size=" + str(j) + " " + "old=" + str(ord(self.input.data[i]))+ " " + "new="+ str(ord(m))
-
-      #print self.array[rand]
-      input.data = input.data[:i] + m*j + input.data[i+1:]
-
-      
-      rpos = int(i/(float(self.input_len))*100.0) 
-      rsize = j/100*100
-      delta = ByteExtensionDeltaMutation(input,  dict(pos = rpos, size = rsize, old = ord(self.input.data[i]), new = ord(m) )) 
-
-    
-    self.delta = delta
-    return input
-
-  def GetInput(self):
-    return self.input.copy()
-
-  def GetDelta(self):
-    return self.delta
-"""
 
 class NullMutator(Mutator):
 
@@ -236,170 +189,6 @@ class NullMutator(Mutator):
   def GetDelta(self):
     return NullDeltaMutation()
 
-
-"""class BruteForceMutator(Mutator):
-
-  array_i = 0
-
-  def __iter__(self):
-    return self
-
-  def next(self):
-
-    i = self.i
-    input = self.input.copy()
-    #print self.array[rand]
-    input.data = input.data[:i] + self.array[self.array_i] + input.data[i+1:]
-
-    if self.array_i == self.array_len-1:
-      self.array_i = 0
-
-      if i == self.input_len-1:
-        raise StopIteration
-      else:
-        self.i = self.i + 1
-
-    else:
-      self.array_i = self.array_i + 1
-
-    return input
-
-  def GetInput(self):
-    return self.input.copy()
-
-  def GetDelta(self):
-
-    delta = dict()
-
-    delta["aoffset"] = self.i
-    delta["roffset"] = (float(self.i) / self.input_len) * 100
-    delta["mtype"] = "."
-
-    delta["byte"] = ord(self.array[self.array_i-1])
-
-    delta["iname"] = self.input.GetName()
-    delta["itype"] = self.input.GetType()
-
-    return delta
-
-class BruteForceExpander(Mutator):
-
-  array_i = 0
-  new_size = 300
-
-  def __iter__(self):
-    return self
-
-  def next(self):
-
-    i = self.i
-    input = self.input.copy()
-    #print self.array[rand]
-    input.data = input.data[:i] + self.array[self.array_i]*self.new_size + input.data[i+1:]
-
-    if self.array_i == self.array_len-1:
-      self.array_i = 0
-
-      if i == self.input_len-1:
-        raise StopIteration
-      else:
-        self.i = self.i + 1
-
-    else:
-      self.array_i = self.array_i + 1
-
-    return input
-
-  def GetInput(self):
-    return self.input.copy()
-
-  def GetDelta(self):
-
-    delta = dict()
-
-    delta["aoffset"] = self.i
-    delta["roffset"] = (float(self.i) / self.input_len) * 100
-    delta["mtype"] = "+"+str(self.new_size)
-
-    delta["byte"] = ord(self.array[self.array_i-1])
-
-    delta["iname"] = self.input.GetName()
-    delta["itype"] = self.input.GetType()
-
-    return delta
-
-
-class InputMutator:
-  def __init__(self, args, files, mutator):
-    assert(args <> [] or files <> [])
-    self.i = 0
-    self.arg_mutators  = []
-    self.file_mutators = []
-    #self.inputs = list(inputs)
-
-    for input in args:
-      self.arg_mutators.append(mutator(input))
-    for input in files:
-      self.file_mutators.append(mutator(input))
-
-    self.inputs = self.arg_mutators + self.file_mutators
-    self.inputs_len = len(self.inputs)
-  #def __mutate__(self, j,
-
-  def __iter__(self):
-    return self
-
-  def next(self, mutate = True):
-    r = []
-    delta = None
-
-    for j, m in enumerate(self.arg_mutators + self.file_mutators):
-      if self.i == j and mutate:
-         try:
-           input = m.next()
-           data = input.PrepareData()
-           delta = m.GetDelta()
-           #delta = input.GetType(), i, v
-
-         except StopIteration:
-           self.i = self.i + 1
-
-           if self.i == self.inputs_len:
-             raise StopIteration
-
-           return self.next()
-
-      else:
-        input = m.GetInput()
-        data = input.PrepareData()
-
-      if data:
-        r.append(data)
-
-    return delta, r
-
-  #def GetDelta(self):
-  #
-  #  mutator = self.inputs[self.i]
-  #  input = mutator.GetInput()
-  #
-  #  offset, val = mutator.GetDelta()
-  #  return [input.GetName(), offset, val]:
-
-    #f = lambda m: m.GetInput().PrepareData()
-
-    #args = GetArgs()
-    #files = GetFiles()
-    #mutator = RandomMutator(args[1])
-
-    #for i in range(0):
-    #  mutator.Mutate()
-
-    #args[0] = mutator.Mutate()
-
-    #return " ".join(map(f,self.arg_mutators)) + " " + "".join(map(f,self.file_mutators))
-    #+ " > /dev/null 2> /dev/null\""
-"""
 
 class RandomInputMutator:
   def __init__(self, inputs, mutator):
