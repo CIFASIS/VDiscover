@@ -33,33 +33,6 @@ if __name__ == "__main__":
     parser.add_argument("infile", help="A csv with the features to train or predict", type=str, default=None)
     parser.add_argument("outdir", help="Output directory to write testcases", type=str, default=None)
 
-
-    """
-    parser.add_argument("--model", type=str,
-                        help="Use a pretrained model (recall only)",
-                        action="store", default=None)
-
-    parser.add_argument("--static",
-                        help="Use static features",
-                        action="store_true", default=False)
-
-    parser.add_argument("--dynamic",
-                        help="Use dynamic features",
-                        action="store_true", default=False)
-
-    parser.add_argument("--train",
-                        help="Train a model using infile",
-                        action="store_true", default=False)
-
-    parser.add_argument("--n-samples", type=int,
-                        help="Select a number of samples from infile (train only)",
-                        action="store", default=None)
-
-    parser.add_argument("--out-file",
-                        help="File to output the results/model",
-                        type=str, default="/dev/stdout")
-    """
-
     options = parser.parse_args()
     in_file = options.infile
     out_dir= options.outdir
@@ -74,8 +47,8 @@ if __name__ == "__main__":
     os.chdir(out_dir)
     csvreader = csv.reader(infile, delimiter='\t')
     for i,row in enumerate(csvreader):
-      args = row[0].split(" ")
-      if len(args) == 1 or args[1] == '':
+      args = filter(lambda x: x is not '', row[0].split(" "))
+      if len(args) == 1:
         continue
       #print args
       name = args[0].replace("/","_")+":"+str(i)

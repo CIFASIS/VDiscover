@@ -18,6 +18,8 @@ Copyright 2014 by G.Grieco
 """
 
 import os
+import os.path
+import shutil
 
 from Input import Arg, File
 
@@ -62,6 +64,12 @@ def WriteTestcase(name, program, args):
 
   os.chdir("inputs")
   for i,arg in enumerate(args):
+    if "file:" in arg:
+      arg = arg.replace("file:","")
+      filename = os.path.split(arg)[-1]
+      shutil.copy(arg, "file_"+filename)
+      arg = filename
+
     filename = "argv_"+str(i+1)+".symb"
     open(filename,"w").write(arg)
 

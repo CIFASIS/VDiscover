@@ -24,6 +24,20 @@ from subprocess import Popen, PIPE, STDOUT
 
 import Input
 
+def opened_files(program, args, files, timeout=5):
+
+  # check if the testcase is opened
+  output = Popen([["timeout","-k","1",str(timeout), "strace","-e","open",program]+args, stdout=PIPE, stderr=PIPE, stdin=PIPE, env=dict()).communicate()
+
+  for mfile in files:
+    filename = mfile.filename
+    #print "checking",filename
+    if 'open("'+filename in output[1]:
+      return True
+
+  return False
+  #print output
+
 def fuzz_cmd(prepared_inputs, fuzzer_cmd, seed):
   p = Popen(fuzzer_cmd.split(" ")+[str(seed)], stdout=PIPE, stdin=PIPE, stderr=PIPE)
   mutated_input = p.communicate(input=prepared_inputs)[0]

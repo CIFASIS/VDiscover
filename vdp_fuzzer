@@ -28,7 +28,7 @@ import random
 from subprocess import Popen, PIPE, STDOUT
 
 from vdiscover.Detection  import GetArgs, GetFiles, GetCmd
-from vdiscover.Mutation   import NullMutator, RandomByteMutator, RandomExpanderMutator, RandomInputMutator, opened_files
+from vdiscover.Mutation   import NullMutator, RandomByteMutator, RandomExpanderMutator, RandomInputMutator, fuzz_cmd
 from vdiscover.Input      import prepare_inputs
 
 
@@ -42,8 +42,11 @@ if __name__ == "__main__":
     parser.add_argument("testcase", help="Testcase to analyze", type=str, default=None)
     parser.add_argument("cmd", help="Testcase to analyze", type=str, default=None)
 
-    parser.add_argument("--check-open-files", 
-                        help="Timeout in seconds (dynamic features only)", action="store_true", default=False)
+    parser.add_argument("--seed-range", type=str,
+                        help="TODO", default="0:1000")
+
+    parser.add_argument("--timeout", dest="timeout", type=int,
+                        help="Timeout in seconds (dynamic features only)", default=3)
 
     parser.add_argument("--show-stdout",
                         help="Don't use /dev/null as stdout/stderr",
@@ -62,10 +65,13 @@ if __name__ == "__main__":
 
     testcase = options.testcase
     vdp_cmd = options.cmd
+    timeout = options.timeout
     show_stdout = options.show_stdout
     invoke_gdb = options.gdb
     use_valgrind = options.valgrind
-    check_open_files = options.check_open_files
+
+
+    start_seed,stop_seed = tuple(options.seed_range.split(":"))
 
     os.chdir(testcase)
     program = GetCmd(None)
@@ -78,13 +84,25 @@ if __name__ == "__main__":
 
     original_inputs = RandomInputMutator(args + files, NullMutator)
     _, original_input = original_inputs.next()
-    prepared_inputs = prepare_inputs(original_input)
+    prepared_inputs = " ".join(prepare_inputs(original_input))
+    
+    for seed in xrange(int(start_seed),int(stop_seed)): 
+   
+      mutated_input = fuzz_cmd(prepared_inputs, vdp_cmd, seed)
+      
+      if use_valgrind:
+        cmd = ["valgrind","--error-exitcode=-1",program]
+      else:
+        cmd = ["timeout","-k","1",str(timeout),program]
+  
+      if show_stdout:
+        p = Popen(cmd+mutated_input.split(" "), stdin=PIPE, env=dict())
+      else:
+        p = Popen(cmd+mutated_input.split(" "), stdout=PIPE, stdin=PIPE, stderr=PIPE, env=dict())
 
-    if check_open_files:
-      if not opened_files(program, prepared_inputs, files):
-        exit(-1)
+      p.communicate()
 
-    p = Popen(vdp_cmd.split(" ")+[program]+prepared_inputs, stdin=PIPE, env=dict())
-    p.communicate()
-    exit(p.returncode)
-     
+      if p.returncode < 0:
+        print testcase, p.returncode, seed, repr(mutated_input)
+        if invoke_gdb:
+          Popen(["gdb","--args",str(timeout),program]+mutated_input.split(" "), env=dict()).communicate()
