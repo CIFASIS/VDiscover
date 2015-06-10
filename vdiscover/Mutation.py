@@ -27,7 +27,7 @@ import Input
 def opened_files(program, args, files, timeout=5):
 
   # check if the testcase is opened
-  output = Popen([["timeout","-k","1",str(timeout), "strace","-e","open",program]+args, stdout=PIPE, stderr=PIPE, stdin=PIPE, env=dict()).communicate()
+  output = Popen(["timeout","-k","1",str(timeout), "strace","-e","open",program]+args, stdout=PIPE, stderr=PIPE, stdin=PIPE, env=dict()).communicate()
 
   for mfile in files:
     filename = mfile.filename
