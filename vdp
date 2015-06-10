@@ -35,7 +35,7 @@ from vdiscover.Input      import prepare_inputs
 if __name__ == "__main__":
 
     # To help argparse to detect the number of columns correctly
-    os.environ['COLUMNS'] = str(os.popen('stty size', 'r').read().split()[1]) #str(shutil.get_terminal_size().columns)
+    #os.environ['COLUMNS'] = str(os.popen('stty size', 'r').read().split()[1]) #str(shutil.get_terminal_size().columns)
 
     # Arguments
     parser = argparse.ArgumentParser(description='Vulnerability Detection Procedure')
@@ -49,8 +49,8 @@ if __name__ == "__main__":
                         help="Don't use /dev/null as stdout/stderr",
                         action="store_true", default=False)
 
-    parser.add_argument("--gdb",
-                        help="Invoke gdb at a crash",
+    parser.add_argument("--show-cmd",
+                        help="xxx",
                         action="store_true", default=False)
 
     parser.add_argument("--valgrind",
@@ -63,9 +63,9 @@ if __name__ == "__main__":
     testcase = options.testcase
     vdp_cmd = options.cmd
     show_stdout = options.show_stdout
-    invoke_gdb = options.gdb
+    #invoke_gdb = options.gdb
     use_valgrind = options.valgrind
-    check_open_files = options.check_open_files
+    show_cmd = options.show_cmd
 
     os.chdir(testcase)
     program = GetCmd(None)
@@ -80,9 +80,13 @@ if __name__ == "__main__":
     _, original_input = original_inputs.next()
     prepared_inputs = prepare_inputs(original_input)
 
-    if check_open_files:
-      if not opened_files(program, prepared_inputs, files):
-        exit(-1)
+    if show_cmd:
+      print vdp_cmd,program," ".join(prepared_inputs)
+      exit(0)
+
+    #if check_open_files:
+    #  if not opened_files(program, prepared_inputs, files):
+    #    exit(-1)
 
     p = Popen(vdp_cmd.split(" ")+[program]+prepared_inputs, stdin=PIPE, env=dict())
     p.communicate()
