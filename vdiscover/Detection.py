@@ -65,9 +65,12 @@ def WriteTestcase(name, program, args):
   os.chdir("inputs")
   for i,arg in enumerate(args):
     if "file:" in arg:
+      #print arg
       arg = arg.replace("file:","")
+      assert(arg[0] == '/')
       filename = os.path.split(arg)[-1]
-      shutil.copy(arg, "file_"+filename)
+      #print filename
+      os.symlink(os.path.realpath(arg), "file_"+filename)
       arg = filename
 
     filename = "argv_"+str(i+1)+".symb"
