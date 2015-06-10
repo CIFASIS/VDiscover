@@ -11,6 +11,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics import confusion_matrix
 
 csv.field_size_limit(sys.maxsize)
 
@@ -36,7 +37,7 @@ def make_pipeline(ftype):
          ('selector', ItemSelector(key='dynamic')),
          ('dvectorizer', CountVectorizer(tokenizer=static_tokenizer, ngram_range=(2,2), lowercase=False)),
          ('todense', DenseTransformer()),
-         ('classifier', RandomForestClassifier(n_estimators=1000, max_features=None, max_depth=100))
+         ('classifier', RandomForestClassifier(n_estimators=1000, max_features=None, max_depth=100, class_weight="auto"))
     ])
   elif ftype is "static":
     return Pipeline(steps=[
@@ -98,7 +99,9 @@ def Train(model_file, in_file, ftype, nsamples):
   model.fit(train_dict,train_classes)
 
   print "Resulting model:"
-  print model 
+  print model
+  print confusion_matrix(train_classes, model.predict(train_dict))
+
   print "Saving model to",model_file
   modelfile.write(pickle.dumps(model))
 
