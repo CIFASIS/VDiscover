@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
+<svg width="11cm" height="3cm" viewBox="350 48 204 58" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g>
+    <rect style="fill: #ffffff" x="351.25" y="66.3995" width="200" height="38"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="351.25" y="66.3995" width="200" height="38"/>
+    <text font-size="10.1598" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="451.25" y="88.4995">
+      <tspan x="451.25" y="88.4995"></tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: #ff0000" x="498.2" y="66.5995" width="54.6" height="38"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="498.2" y="66.5995" width="54.6" height="38"/>
+    <text font-size="10.1598" style="fill: #ffffff;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="525.5" y="88.6995">
+      <tspan x="525.5" y="88.6995">buggy</tspan>
+    </text>
+  </g>
+  <text font-size="10.1598" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="511.75" y="58.3995">
+    <tspan x="511.75" y="58.3995">26%</tspan>
+  </text>
+  <text font-size="10.1598" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="411.1" y="57.9995">
+    <tspan x="411.1" y="57.9995">74%</tspan>
+  </text>
+  <text font-size="10.1598" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="408.75" y="88.753">
+    <tspan x="408.75" y="88.753">robust</tspan>
+  </text>
+</svg>
