@@ -37,6 +37,14 @@ if __name__ == "__main__":
                         help="Use a pretrained model (recall only)",
                         action="store", default=None)
 
+    parser.add_argument("--prob",
+                        help="Output the probability of each prediction (recall only)",
+                        action="store_true", default=False)
+
+    parser.add_argument("--test",
+                        help="Test a model using infile (recall only)",
+                        action="store_true", default=False)
+
     parser.add_argument("--static",
                         help="Use static features",
                         action="store_true", default=False)
@@ -60,7 +68,9 @@ if __name__ == "__main__":
     options = parser.parse_args()
     in_file = options.infile
 
+    test_mode = options.test
     training_mode = options.train
+    probability_mode = options.prob
     nsamples = options.n_samples
 
     static_only = options.static
@@ -84,4 +94,4 @@ if __name__ == "__main__":
         print "VDiscover requires a pre-trained model to predict"
         exit(-1)
 
-      Recall(model_file, in_file, ftype, out_file)
+      Recall(model_file, in_file, ftype, out_file, test=test_mode, probability=probability_mode)

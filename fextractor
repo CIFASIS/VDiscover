@@ -48,7 +48,7 @@ if __name__ == "__main__":
     random.seed()
 
     # To help argparse to detect the number of columns correctly
-    os.environ['COLUMNS'] = str(os.popen('stty size', 'r').read().split()[1]) #str(shutil.get_terminal_size().columns)
+    #os.environ['COLUMNS'] = str(os.popen('stty size', 'r').read().split()[1]) #str(shutil.get_terminal_size().columns)
 
     # Arguments
     parser = argparse.ArgumentParser(description='Feature extraction of VDiscover')
@@ -145,7 +145,7 @@ if __name__ == "__main__":
       mutated_input_generator = RandomInputMutator(args + files, RandomByteMutator)
 
       app = Process(program, envs, timeout, included_mods, ignored_mods, no_stdout = not show_stdout )
-      prt = TypePrinter(csvfile, program, mclass)
+      prt = TypePrinter(csvfile, testcase, mclass)
 
       # unchanged input
       null_mutt, original_input = original_inputs.next()

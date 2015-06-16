@@ -19,7 +19,7 @@ Copyright 2014 by G.Grieco
 
 import re
 import csv
-import os
+import os, os.path
 import subprocess
 
 from Misc import parse_ldd_output, sh_string
@@ -56,22 +56,29 @@ def _save_cached_data(path, plt, got, base):
   writer = csv.writer(csvfile, delimiter='\t')
 
   for (name,addr) in got.items():
-    print "got",name, addr
+    #print "got",name, addr
     if addr is not None:
       writer.writerow((name,addr))
 
 def _load_cached_data(path, plt, got, base):
+
+  cachedir = os.path.dirname(realpath+"/"+datadir)
+  if not os.path.exists(cachedir):
+    os.makedirs(cachedir)
+  
 
   filename = realpath+"/"+datadir+"/"+str(path.replace("/","_"))
   try:
       csvfile = open(filename+".plt", 'rb')
   except IOError:
       return False
+  print "cached file:",filename+".plt"
+
   reader = csv.reader(csvfile, delimiter='\t')
 
   for (name,addr) in reader:
+      print name, int(addr)+base
       plt[name] = int(addr)+base
-
 
   try:
       csvfile = open(filename+".got", 'rb')
@@ -127,6 +134,8 @@ def entrypoint(path):
 
     #elfclass = re.findall('Class:\s*(.*$)', out, re.MULTILINE)[0]
     entrypoint = int(re.findall('Entry point address:\s*(.*$)', out, re.MULTILINE)[0], 16)
+    if "DYN (Shared object file)" in out:
+      entrypoint = entrypoint + 0x80000000
 
     return entrypoint
 

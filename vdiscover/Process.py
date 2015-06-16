@@ -99,7 +99,6 @@ class Process(Application):
         return None, None
 
     def createEvents(self, signal):
-
         # Hit breakpoint?
         if signal.signum == SIGTRAP:
             ip = self.process.getInstrPointer()
@@ -169,9 +168,9 @@ class Process(Application):
           return [Signal("SIGSEGV", self.process, self.mm), Crash(self.process, self.mm)]
 
         elif signal.signum == SIGILL:
-          self.crashed = True
+          #self.crashed = True
           self.mm  = MemoryMaps(self.program, self.pid)
-          return [Signal("SIGILL", self.process, self.mm), Crash(self.process, self.mm)]
+          return [Signal("SIGILL", self.process, self.mm)]
 
         elif signal.signum == SIGFPE:
           self.crashed = True
@@ -179,14 +178,14 @@ class Process(Application):
           return [Signal("SIGFPE", self.process, self.mm), Crash(self.process, self.mm)]
 
         elif signal.signum == SIGBUS:
-          self.crashed = True
+          #self.crashed = True
           self.mm  = MemoryMaps(self.program, self.pid)
-          return [Signal("SIGBUS", self.process, self.mm), Crash(self.process, self.mm)]
+          return [Signal("SIGBUS", self.process, self.mm)]
 
         elif signal.signum == SIGCHLD:
-          self.crashed = True
+          #self.crashed = True
           self.mm  = MemoryMaps(self.program, self.pid)
-          return [Signal("SIGCHLD", self.process, self.pid), Crash(self.process, self.mm)]
+          return [Signal("SIGCHLD", self.process, self.pid)]
 
         elif signal.signum == SIGTERM: # killed by the kernel?
           self.crashed = True
@@ -295,10 +294,10 @@ class Process(Application):
 
         signal(SIGALRM, alarm_handler)
 
-        if self.pid is None:
-          timeout = 20*self.timeout
-        else:
-          timeout = self.timeout
+        #if self.pid is None:
+        #  timeout = 20*self.timeout
+        #else:
+        timeout = 10*self.timeout
 
         alarm(timeout)
 
