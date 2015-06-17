@@ -57,27 +57,30 @@ def _save_cached_data(path, plt, got, base):
 
   for (name,addr) in got.items():
     #print "got",name, addr
-    if addr is not None:
-      writer.writerow((name,addr))
+    if addr is None:
+      addr = 0x0
+    writer.writerow((name,addr))
 
 def _load_cached_data(path, plt, got, base):
-
+  
   cachedir = os.path.dirname(realpath+"/"+datadir)
   if not os.path.exists(cachedir):
     os.makedirs(cachedir)
   
 
   filename = realpath+"/"+datadir+"/"+str(path.replace("/","_"))
+
+  #print filename
   try:
       csvfile = open(filename+".plt", 'rb')
   except IOError:
       return False
-  print "cached file:",filename+".plt"
+  #print "cached file:",filename+".plt"
 
   reader = csv.reader(csvfile, delimiter='\t')
 
   for (name,addr) in reader:
-      print name, int(addr)+base
+      #print name, int(addr)+base
       plt[name] = int(addr)+base
 
   try:
@@ -88,15 +91,20 @@ def _load_cached_data(path, plt, got, base):
   reader = csv.reader(csvfile, delimiter='\t')
 
   for (name,addr) in reader:
-      got[name] = int(addr)
-
+     addr = int(addr)
+     if addr == 0x0:
+       addr = None 
+     got[name] = addr
+  
   return True
 
 def plt_got(path, base):
   plt, got = dict(), dict()
 
-  #if _load_cached_data(path, plt, got, base):
-  #  return plt, got
+  if _load_cached_data(path, plt, got, base):
+    #print "plt",plt
+    #print "got",got
+    return plt, got
 
   cmd = [_OBJDUMP, '-d', path]
   out = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
@@ -118,7 +126,7 @@ def plt_got(path, base):
   #print "plt",plt
   #print "got",got
 
-  #_save_cached_data(path, plt, got, base)
+  _save_cached_data(path, plt, got, base)
   return plt, got
 
 def load_raw_inss(path):
