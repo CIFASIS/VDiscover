@@ -42,8 +42,11 @@ if __name__ == "__main__":
     parser.add_argument("testcase", help="Testcase to analyze", type=str, default=None)
     parser.add_argument("cmd", help="Testcase to analyze", type=str, default=None)
 
-    parser.add_argument("--check-open-files", 
-                        help="Timeout in seconds (dynamic features only)", action="store_true", default=False)
+    parser.add_argument("--io-mode",
+                        help="Input-Output mode", action="store_true", default=False)
+
+    parser.add_argument("--seed-range", type=str,
+                        help="A seed range to feed the cmd (io mode only)", default="0:0")
 
     parser.add_argument("--show-stdout",
                         help="Don't use /dev/null as stdout/stderr",
@@ -53,18 +56,18 @@ if __name__ == "__main__":
                         help="xxx",
                         action="store_true", default=False)
 
-    parser.add_argument("--valgrind",
-                        help="Detect errors with valgrind",
-                        action="store_true", default=False)
+    parser.add_argument("--timeout", dest="timeout", type=int,
+                        help="Timeout in seconds (io mode only)", default=3)
 
 
     options = parser.parse_args()
 
+    start_seed,stop_seed = tuple(options.seed_range.split(":"))
     testcase = options.testcase
     vdp_cmd = options.cmd
     show_stdout = options.show_stdout
-    #invoke_gdb = options.gdb
-    use_valgrind = options.valgrind
+    io_mode = options.io_mode
+    timeout = options.timeout
     show_cmd = options.show_cmd
 
     os.chdir(testcase)
@@ -84,11 +87,30 @@ if __name__ == "__main__":
       print vdp_cmd,program," ".join(prepared_inputs)
       exit(0)
 
-    #if check_open_files:
-    #  if not opened_files(program, prepared_inputs, files):
-    #    exit(-1)
+    if io_mode:
 
-    p = Popen(vdp_cmd.split(" ")+[program]+prepared_inputs, stdin=PIPE, env=dict())
-    p.communicate()
+      DEVNULL = open(os.devnull, 'wb')
+      in_filename = files[0].GetName()
+      out_filename = files[0].GetFilename()
+      vdp_cmd = vdp_cmd.replace("<input>", in_filename)
+      vdp_cmd = vdp_cmd.replace("<output>", out_filename)
+
+      for seed in xrange(int(start_seed),int(stop_seed)):
+        cmd = vdp_cmd.replace("<seed>",str(seed))
+        p = Popen(cmd.split(" "), stdin=PIPE, stdout=DEVNULL, stderr=DEVNULL, env=dict())
+        p.communicate()
+        p = Popen(["timeout","-k","1",str(timeout),program]+prepared_inputs, stdin=PIPE, stdout=DEVNULL, stderr=DEVNULL, env=dict())
+        p.communicate()
+
+        if p.returncode < 0:
+          print >> sys.stderr, testcase, p.returncode, seed
+          exit(1)
+
+      exit(0)
+
+    else:
+      p = Popen(vdp_cmd.split(" ")+[program]+prepared_inputs, stdin=PIPE, env=dict())
+      p.communicate()
+
     exit(p.returncode)
      

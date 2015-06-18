@@ -165,5 +165,8 @@ class File(Input):
   def GetName(self):
     return "file_"+self.filename.replace("/", "__")
 
+  def GetFilename(self):
+    return str(self.filename)
+
   def GetType(self):
     return "file"
