@@ -74,12 +74,18 @@
         </div>
         
         <div class="container ">
-          <p>With sustained growth of software complexity, finding security vulnerabilities in operating systems has become an important necessity. 
-Unfortunately, the use of <strong>costly</strong> techniques on a <strong>large</strong> amount of testcases to analyze is still an issue today. The <strong>lack of source code</strong>
-access restricts even more the possibilities to find vulnerabilities at large scale.
-<br /> <br />
-We were motivated by these reasons to design and develop a predictive approach to vulnerability discovery.</p>
+          <p>With sustained growth of software complexity, finding security vulnerabilities in operating systems has become an important necessity.
+Very well known vulnerability detection techniques like static analysis, symbolic execution or fuzzing are <strong>very costly</strong> to be used in a large
+amount of test cases. </p>
 
+<p>That is why we present a <strong>predictive</strong> approach to vulnerability discovery that:</p>
+
+<ul>
+  <li>Uses <strong>lightweight</strong> feature extraction to be <strong>scalable</strong>.</li>
+  <li>Is <strong>fully automatic</strong> and <strong>adaptive</strong> to be trained using different vulnerability detection techniques.</li>
+  <li>Works directly on test cases <strong>without source code</strong>.</li>
+  <li>It is <strong><a href="#where">open-source</a></strong>.</li>
+</ul>
 
         </div>
       </div>
@@ -96,7 +102,7 @@ We were motivated by these reasons to design and develop a predictive approach t
         </div>
         
         <div class="container ">
-          <p>Given a <strong>costly</strong> vulnerability discovery procedure and a <strong>large</strong> amount of testcases to analyze, </p>
+          <p>Given a vulnerability discovery procedure and a <strong>large</strong> amount of test cases to analyze, </p>
 
 <p><br /> <br /> <br /></p>
 
@@ -104,8 +110,9 @@ We were motivated by these reasons to design and develop a predictive approach t
 
 <p><br /> <br /> <br /></p>
 
-<p>VDiscover is trained to predict the result of a costly analysis extracting different sets of features using
-a <strong>fully automatic</strong> and <strong>very lightweight</strong> approach. Features are directly from executable files <strong>without the source code</strong>.</p>
+<p>VDiscover is trained to predict the result of a costly analysis extracting different sets of features. This procedure was 
+designed to be <strong>fully automatic</strong> and <strong>very lightweight</strong>. Features are directly extracted from executable files <strong>without the source code</strong>
+using lightweight dynamic or static analysis.</p>
 
 <p><br /> <br /> <br /></p>
 
@@ -147,6 +154,11 @@ python setup.py install --user
 
 <hr />
 
+<h3 id="a-practical-example-of-vdiscover">A practical example of VDiscover:</h3>
+<ul>
+  <li><a href="http://www.vdiscover.org/OS-fuzzing.html">Using Machine Learning to predict the outcome of a zzuf fuzzing campaign</a></li>
+</ul>
+
 <h3 id="sort-of-documentation-is-available">(Sort of) documentation is available:</h3>
 <ul>
   <li><a href="https://github.com/CIFASIS/VDiscover/blob/master/README.md">A quick introduction to VDiscover features</a> </li>
@@ -174,7 +186,7 @@ python setup.py install --user
 <ul>
   <li><a href="http://www.cifasis-conicet.gov.ar/"><strong>CIFASIS</strong></a>   <img src="img/AR.png" alt="AR" height="22" width="22" /> 
     <ul>
-      <li><a href="&#109;&#097;&#105;&#108;&#116;&#111;:&#103;&#114;&#105;&#101;&#099;&#111;&#064;&#099;&#105;&#102;&#097;&#115;&#105;&#115;&#045;&#099;&#111;&#110;&#105;&#099;&#101;&#116;&#046;&#103;&#111;&#118;&#046;&#097;&#114;">Gustavo Grieco</a></li>
+      <li><a href="&#109;&#097;&#105;&#108;&#116;&#111;:&#103;&#114;&#105;&#101;&#099;&#111;&#064;&#099;&#105;&#102;&#097;&#115;&#105;&#115;&#045;&#099;&#111;&#110;&#105;&#099;&#101;&#116;&#046;&#103;&#111;&#118;&#046;&#097;&#114;">Gustavo Grieco</a> <strong>(dev)</strong></li>
       <li><a href="&#109;&#097;&#105;&#108;&#116;&#111;:&#103;&#114;&#105;&#110;&#098;&#108;&#097;&#116;&#064;&#099;&#105;&#102;&#097;&#115;&#105;&#115;&#045;&#099;&#111;&#110;&#105;&#099;&#101;&#116;&#046;&#103;&#111;&#118;&#046;&#097;&#114;">Guillermo Luis Grinblat</a></li>
       <li><a href="&#109;&#097;&#105;&#108;&#116;&#111;:&#117;&#122;&#097;&#108;&#064;&#099;&#105;&#102;&#097;&#115;&#105;&#115;&#045;&#099;&#111;&#110;&#105;&#099;&#101;&#116;&#046;&#103;&#111;&#118;&#046;&#097;&#114;">Lucas Uzal</a></li>
     </ul>
@@ -218,6 +230,6 @@ this site is <a href="https://github.com/t413/SinglePaged">open source</a></p>
   </div>
 
 </body>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="jquery.min.js"></script>
 <script src="site.js"></script>
 </html>
