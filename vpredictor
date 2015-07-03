@@ -53,8 +53,16 @@ if __name__ == "__main__":
                         help="Use dynamic features",
                         action="store_true", default=False)
 
-    parser.add_argument("--train",
-                        help="Train a model using infile",
+    #parser.add_argument("--valid",
+    #                    help="Valid a model using infile",
+    #                    action="store", default=None)
+
+    parser.add_argument("--train-rf",
+                        help="Train a Random Forest using infile",
+                        action="store_true", default=False)
+
+    parser.add_argument("--train-lstm",
+                        help="Train a LSTM using infile (warning: very experimental and slow)",
                         action="store_true", default=False)
 
     parser.add_argument("--n-samples", type=int,
@@ -66,10 +74,15 @@ if __name__ == "__main__":
                         type=str, default="/dev/stdout")
 
     options = parser.parse_args()
-    in_file = options.infile
-
+    in_file = options.infile 
+    valid_file = None#options.valid
+   
     test_mode = options.test
-    training_mode = options.train
+
+    training_mode_rf = options.train_rf
+    training_mode_lstm = options.train_lstm
+    training_mode = training_mode_rf or training_mode_lstm
+
     probability_mode = options.prob
     nsamples = options.n_samples
 
@@ -88,7 +101,10 @@ if __name__ == "__main__":
       ftype = "dynamic"
 
     if training_mode:
-      Train(out_file, in_file, ftype, nsamples)
+      if training_mode_rf:
+        Train(out_file, in_file, valid_file, "rf", ftype, nsamples)
+      elif training_mode_lstm:
+        Train(out_file, in_file, valid_file, "lstm", ftype, nsamples)
     else:
       if model_file is None:
         print "VDiscover requires a pre-trained model to predict"

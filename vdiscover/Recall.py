@@ -39,6 +39,8 @@ def Recall(model_file, in_file, in_type, out_file, probability=False, test=False
     predicted_classes = map(lambda x: x[1], model.predict_proba(x)) # probability of the second class
   else:
     predicted_classes = model.predict(x)
+  
+  #print predicted_classes
 
   for testcase,y in zip(testcases,predicted_classes):
     csvwriter.writerow([testcase,y])
