@@ -74,7 +74,11 @@ def make_pipeline(ftype):
   else:
     assert(0)
 
-from keras.preprocessing import sequence
+try:
+  from keras.preprocessing import sequence
+except:
+  pass
+
  
 class KerasPreprocessor:
 
