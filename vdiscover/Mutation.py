@@ -171,11 +171,12 @@ class RandomByteMutator(Mutator):
  
     # single byte mutation
     i = random.randrange(self.input_len)
-    m = self.array[random.randrange(self.array_len)]
-    input.data = input.data[:i] + m + input.data[i+1:]
+    #m = self.array[random.randrange(self.array_len)]
+    m = ord(input.data[i]) ^ (1 << random.randrange(7))
+    input.data = input.data[:i] + chr(m) + input.data[i+1:]
       
     rpos = int(i/(float(self.input_len))*100.0) 
-    self.delta = OneByteDeltaMutation(input, dict(pos = rpos, old = ord(self.input.data[i]), new=ord(m))) 
+    self.delta = None#OneByteDeltaMutation(input, dict(pos = rpos, old = ord(self.input.data[i]), new=ord(m))) 
     return input
 
   def GetInput(self):
@@ -217,7 +218,7 @@ class RandomInputMutator:
   def next(self, mutate = True):
     r = []
     delta = None
-    symb_inputs = filter(lambda (_,x): x.input.isSymbolic(), enumerate(self.inputs))
+    symb_inputs = filter(lambda (_,x): x.input.isSymbolic() and x.input.GetType() == "file", enumerate(self.inputs))
     symb_inputs_len = len(symb_inputs)
     
     self.i = symb_inputs[random.randrange(symb_inputs_len)][0]

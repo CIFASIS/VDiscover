@@ -81,12 +81,12 @@ class TypePrinter:
 
     events = r
 
-    x = hash(tuple(events))
+    #x = hash(tuple(events))
 
-    if (x in self.tests):
-      return
+    #if (x in self.tests):
+    #  return
 
-    self.tests.add(x)
+    #self.tests.add(x)
 
     trace = ""
 

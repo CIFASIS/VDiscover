@@ -21,9 +21,11 @@ from sklearn.base import  BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.decomposition import TruncatedSVD, PCA
+from sklearn.manifold import MDS
 
-from random import randint, sample
+from random import random, randint, sample, gauss
 
 def static_tokenizer(s):
     return filter(lambda x: x<>'', s.split(" "))
@@ -55,7 +57,22 @@ class ItemSelector(BaseEstimator, TransformerMixin):
     def transform(self, data_dict):
         return data_dict[self.key]
 
-def make_pipeline(ftype):
+class CutoffMax(BaseEstimator, TransformerMixin):
+
+    def __init__(self, maxv):
+        self.maxv = maxv
+
+    def fit(self, x, y=None):
+        self.pos = x > self.maxv
+        return self
+
+    def transform(self, X, y=None, **fit_params):
+        X[self.pos] = self.maxv
+        return X
+
+
+
+def make_train_pipeline(ftype):
   
   if ftype is "dynamic":
     return Pipeline(steps=[
@@ -74,10 +91,206 @@ def make_pipeline(ftype):
   else:
     assert(0)
 
+def make_cluster_pipeline_bow(ftype): 
+  if ftype is "dynamic":
+    return Pipeline(steps=[
+         ('selector', ItemSelector(key='dynamic')),
+         ('dvectorizer', TfidfVectorizer(tokenizer=dynamic_tokenizer, use_idf=False, norm=None, ngram_range=(2,2), lowercase=False)),
+         ('todense', DenseTransformer()),
+         ('cutfoff', CutoffMax(16)),
+         ('reducer', PCA(n_components=2)),
+
+    ])
+  elif ftype is "static":
+    raise NotImplemented
+  else:
+    assert(0)
+
+def make_cluster_pipeline_subtraces(ftype): 
+  if ftype is "dynamic":
+    return Pipeline(steps=[
+         ('selector', ItemSelector(key='dynamic')),
+         #('todense', DenseTransformer()),
+         ('reducer', PCA(n_components=2)),
+    ])
+  elif ftype is "static":
+    raise NotImplemented
+  else:
+    assert(0)
+
+
+
+
+
 try:
   from keras.preprocessing import sequence
 except:
   pass
+
+
+class DeepReprPreprocessor:
+
+  def __init__(self, tokenizer, max_len, batch_size):
+    self.tokenizer = tokenizer
+    self.max_len = max_len
+    self.batch_size = batch_size
+
+  def preprocess_traces(self, X_data, labels=None, cut_size=1):
+
+    cut_X_data = []
+    cut_label_data = []
+
+    X_size = len(X_data)
+
+    cut_y_data = []
+    for i,x in enumerate(X_data[:760]):
+
+      #i = randint(0, X_size-1)
+      
+      raw_trace = x[:-1]
+      trace = raw_trace.split(" ")
+      #print trace 
+
+      size = len(trace)
+      #if size < 5:
+      #  continue
+      #end = (self.max_len) #- size
+      #new_trace = " ".join(trace[:end])
+      #cut_X_data.append(new_trace)
+
+      start = size - (self.max_len)
+      start = randint(0, max(start,0))
+      new_trace = " ".join(trace[start:(start+size)])
+      cut_X_data.append(new_trace)
+ 
+      if labels is None:
+        cut_label_data.append("+"+str(size))
+      else:
+        #label = labels[i].split("-")[-1]
+        #if label[0] == 'x':
+        cut_label_data.append(labels[i])
+        #else:
+        #  cut_label_data.append("")
+       
+
+
+      #new_trace = [0]* (self.max_len / 2)
+
+      #i = randint(0, X_size-34)
+      #new_trace = ""
+      #start = size - (self.max_len)
+      #new_trace = " ".join(trace[start:])
+      #cut_X_data.append(new_trace)
+      #cut_label_data.append("-"+str(size))
+
+    X_train = self.tokenizer.texts_to_sequences(cut_X_data)
+    labels = cut_label_data
+    X_train,labels = zip(*filter(lambda (x,y): not (x == []), zip(X_train,labels)))
+    #X_train = filter(lambda x: not (x == []), X_train)
+
+
+    X_size = len(X_train)
+    #X_train = X_train[:(X_size-(X_size % self.batch_size))] 
+    X_train = sequence.pad_sequences(X_train, maxlen=self.max_len)
+    return X_train, labels
+ 
+  def preprocess(self, X_data, cut_size=1):
+
+    cut_X_data = []
+    cut_y_data = []
+    self.classes = []
+    X_size = len(X_data)
+    #assert(0)
+    stats = dict()
+
+    for _ in xrange(1000):
+      
+      i = randint(0, X_size-1)
+      
+      raw_trace = X_data[i][:-1]
+      trace = raw_trace.split(" ") 
+
+      size = len(trace)
+
+      start = randint(0, size-2)
+      end = randint(start, size-2)
+
+      new_trace = " ".join(trace[start:(end+1)])
+      last_event = trace[end+1].split(":")
+      cut_y_data.append(last_event[0])
+
+
+    for y in set(cut_y_data):
+      stats[y] = float(cut_y_data.count(y)) / len(cut_y_data) 
+
+    print stats, sum(stats.values())
+    #assert(0)
+
+    cut_y_data = []
+    for _ in xrange(cut_size):
+
+      i = randint(0, X_size-1)
+      
+      raw_trace = X_data[i][:-1]
+      trace = raw_trace.split(" ") 
+
+      size = len(trace)
+
+      start = randint(0, size-2)
+      end = randint(start, size-2)#start + randint(0, self.max_len)
+
+      new_trace = " ".join(trace[start:(end+1)])
+      last_event = trace[end+1].split(":")
+      cl = last_event[0]
+
+      #if len(last_event) > 1:
+      #  print cl, last_event[1]
+      if cl in stats:
+        if random() <= stats[cl]:
+          continue
+    
+ 
+      cut_X_data.append(new_trace)
+
+      if cl not in self.classes:
+        self.classes.append(cl)
+
+      cut_y_data.append(self.classes.index(cl))
+
+      #if y_data is not None:
+      #  y = y_data[i]
+      #  cut_y_data.append(y)
+
+    X_train = self.tokenizer.texts_to_sequences(cut_X_data)
+
+    #for y in set(cut_y_data):
+    #    print self.classes[y],float(cut_y_data.count(y)) / len(cut_y_data) * 100
+ 
+    y_train = []
+
+    for y in cut_y_data:
+        v = [0]*len(self.classes)
+        v[y] = 1
+        y_train.append(v)
+ 
+    #if y_train is not None:
+    #  X_train,y_train = zip(*filter(lambda (x,y): not (x == []), zip(X_train,y_train)))
+    #else:
+    X_train = filter(lambda x: not (x == []), X_train)
+
+
+    X_size = len(X_train)
+    X_train = X_train[:(X_size-(X_size % self.batch_size))] 
+    X_train = sequence.pad_sequences(X_train, maxlen=self.max_len)
+   
+    if y_train is not None:
+      y_train = y_train[:(X_size-(X_size % self.batch_size))]
+      return X_train,y_train
+    else:
+      return X_train
+
+
+
 
  
 class KerasPreprocessor:

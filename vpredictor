@@ -26,6 +26,7 @@ import sys
 from vdiscover.Pipeline import *
 from vdiscover.Recall  import Recall
 from vdiscover.Train  import Train
+from vdiscover.Cluster  import Cluster
 
 if __name__ == "__main__":
 
@@ -53,9 +54,14 @@ if __name__ == "__main__":
                         help="Use dynamic features",
                         action="store_true", default=False)
 
-    #parser.add_argument("--valid",
-    #                    help="Valid a model using infile",
-    #                    action="store", default=None)
+    parser.add_argument("--valid",
+                        help="Valid a model using infile",
+                        action="store", default=None)
+
+    parser.add_argument("--cluster",
+                        help="Cluster input traces",
+                        action="store_true", default=False)
+
 
     parser.add_argument("--train-rf",
                         help="Train a Random Forest using infile",
@@ -75,13 +81,14 @@ if __name__ == "__main__":
 
     options = parser.parse_args()
     in_file = options.infile 
-    valid_file = None#options.valid
+    valid_file = options.valid
    
     test_mode = options.test
 
     training_mode_rf = options.train_rf
     training_mode_lstm = options.train_lstm
-    training_mode = training_mode_rf or training_mode_lstm
+    training_mode_cluster = options.cluster
+    training_mode = training_mode_rf or training_mode_lstm or training_mode_cluster
 
     probability_mode = options.prob
     nsamples = options.n_samples
@@ -105,6 +112,8 @@ if __name__ == "__main__":
         Train(out_file, in_file, valid_file, "rf", ftype, nsamples)
       elif training_mode_lstm:
         Train(out_file, in_file, valid_file, "lstm", ftype, nsamples)
+      elif training_mode_cluster:
+        Cluster(model_file, out_file, in_file, valid_file, "cluster", ftype, nsamples) 
     else:
       if model_file is None:
         print "VDiscover requires a pre-trained model to predict"

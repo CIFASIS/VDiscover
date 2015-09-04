@@ -47,7 +47,7 @@ def GetArg(n, conc):
 
   return x
 
-def WriteTestcase(name, program, args):
+def WriteTestcase(name, program, args, copy=False):
   try:
     os.mkdir(name)
   except:
@@ -70,7 +70,10 @@ def WriteTestcase(name, program, args):
       assert(arg[0] == '/')
       filename = os.path.split(arg)[-1]
       #print filename
-      os.symlink(os.path.realpath(arg), "file_"+filename)
+      if copy:
+        shutil.copyfile(os.path.realpath(arg),  "file_"+filename)
+      else:
+        os.symlink(os.path.realpath(arg), "file_"+filename)
       arg = filename
 
     filename = "argv_"+str(i+1)+".symb"

@@ -81,7 +81,7 @@ def TrainScikitLearn(model_file, train_file, valid_file, ftype, nsamples):
   train_dict[ftype] = train_features 
 
   print "Transforming data and fitting model.."
-  model = make_pipeline(ftype)
+  model = make_train_pipeline(ftype)
   model.fit(train_dict,train_classes)
 
   print "Resulting model:"
@@ -192,9 +192,11 @@ def TrainKeras(model_file, train_file, valid_file, ftype, nsamples):
   
   modelfile.write(pickle.dumps(KerasPredictor(preprocessor,model,ftype)))
 
+
 def Train(model_file, train_file, valid_file, ttype, ftype, nsamples):
   if ttype == "rf":
-     TrainScikitLearn(model_file, train_file, valid_file, ftype, nsamples)
+    TrainScikitLearn(model_file, train_file, valid_file, ftype, nsamples)
+
   elif ttype == "lstm":
      try:
        import keras
