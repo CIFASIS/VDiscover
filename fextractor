@@ -141,7 +141,7 @@ if __name__ == "__main__":
       files = GetFiles()
 
       original_inputs = RandomInputMutator(args + files, NullMutator)
-      expanded_input_generator = RandomInputMutator(args + files, RandomExpanderMutator)
+      #expanded_input_generator = RandomInputMutator(args + files, RandomExpanderMutator)
       mutated_input_generator = RandomInputMutator(args + files, RandomByteMutator)
 
       app = Process(program, envs, timeout, included_mods, ignored_mods, no_stdout = not show_stdout )
@@ -155,9 +155,9 @@ if __name__ == "__main__":
         print "Execution of",program,"failed!"
         exit(-1)
 
-      prt.print_events(original_events)
+      prt.print_events(original_events) 
 
-      for (i, (d, mutated)) in enumerate(expanded_input_generator):
+      for (i, (d, mutated)) in enumerate(mutated_input_generator):
 
         if i >= max_mut:
           break
