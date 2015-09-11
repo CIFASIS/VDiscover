@@ -77,8 +77,9 @@ def make_train_pipeline(ftype):
   if ftype is "dynamic":
     return Pipeline(steps=[
          ('selector', ItemSelector(key='dynamic')),
-         ('dvectorizer', CountVectorizer(tokenizer=static_tokenizer, ngram_range=(2,2), lowercase=False)),
+         ('dvectorizer', CountVectorizer(tokenizer=static_tokenizer, ngram_range=(1,1), lowercase=False)),
          ('todense', DenseTransformer()),
+         ('cutfoff', CutoffMax(16)),
          ('classifier', RandomForestClassifier(n_estimators=1000, max_features=None, max_depth=100, class_weight="auto"))
     ])
   elif ftype is "static":
@@ -95,7 +96,7 @@ def make_cluster_pipeline_bow(ftype):
   if ftype is "dynamic":
     return Pipeline(steps=[
          ('selector', ItemSelector(key='dynamic')),
-         ('dvectorizer', TfidfVectorizer(tokenizer=dynamic_tokenizer, use_idf=False, norm=None, ngram_range=(2,2), lowercase=False)),
+         ('dvectorizer', TfidfVectorizer(tokenizer=dynamic_tokenizer, use_idf=False, norm=None, ngram_range=(1,1), lowercase=False)),
          ('todense', DenseTransformer()),
          ('cutfoff', CutoffMax(16)),
          ('reducer', PCA(n_components=2)),

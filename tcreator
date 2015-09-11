@@ -25,6 +25,7 @@ import sys
 import csv
 
 from vdiscover.Detection import WriteTestcase
+concatenate = lambda *lists: reduce((lambda a,b: a.extend(b) or a),lists,[])
 
 if __name__ == "__main__":
 
@@ -70,6 +71,15 @@ if __name__ == "__main__":
     else:
 
       os.chdir(out_dir)
-      args = filter(lambda x: x is not '', cmd.split(" "))
-      WriteTestcase(name,args[0],args[1:], copy)
+      args = cmd.split("'")
+      args = map(lambda x: x.split(" "), args)
+      pargs = []
+
+      for arg in args:
+        if arg <> '':
+          pargs = pargs + arg
+      #args = concatenate(args)
+      print pargs 
+      #args = filter(lambda x: x is not '', cmd.split(" "))
+      WriteTestcase(name,pargs[0],pargs[1:], copy)
 

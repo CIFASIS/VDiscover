@@ -61,8 +61,8 @@ def TrainScikitLearn(model_file, train_file, valid_file, ftype, nsamples):
       train_classes.append(int(cl))
   else:
     
-    train_size = file_len(in_file)
-    skip_until = random.randint(0,train_size - nsamples)
+    train_size = file_len(train_file)
+    skip_until = randint(0,train_size - nsamples)
 
     for i,(program, features, cl) in enumerate(csvreader):
  
