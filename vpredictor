@@ -22,6 +22,10 @@ Copyright 2014 by G.Grieco
 import os
 import argparse
 import sys
+import csv
+
+csv.field_size_limit(sys.maxsize)
+sys.setrecursionlimit(1024*1024*1024)
 
 from vdiscover.Pipeline import *
 from vdiscover.Recall  import Recall
@@ -45,6 +49,11 @@ if __name__ == "__main__":
     parser.add_argument("--test",
                         help="Test a model using infile (recall only)",
                         action="store_true", default=False)
+
+    parser.add_argument("--test-aggr",
+                        help="Test a model using infile (recall only)",
+                        action="store_true", default=False)
+ 
 
     parser.add_argument("--static",
                         help="Use static features",
@@ -83,7 +92,8 @@ if __name__ == "__main__":
     in_file = options.infile 
     valid_file = options.valid
    
-    test_mode = options.test
+    test_simple = options.test
+    test_aggr = options.test_aggr
 
     training_mode_rf = options.train_rf
     training_mode_lstm = options.train_lstm
@@ -118,5 +128,11 @@ if __name__ == "__main__":
       if model_file is None:
         print "VDiscover requires a pre-trained model to predict"
         exit(-1)
+   
+      test_mode = None
+      if test_simple:
+        test_mode = "simple"
+      elif test_aggr:
+        test_mode = "aggregated"
 
-      Recall(model_file, in_file, ftype, out_file, test=test_mode, probability=probability_mode)
+      Recall(model_file, in_file, ftype, out_file, test_mode, probability=probability_mode)

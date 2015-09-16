@@ -2,51 +2,34 @@ import gzip
 import sys
 import csv
 import pickle
+import numpy
 
 from sklearn.metrics import confusion_matrix, classification_report, average_precision_score, accuracy_score, roc_auc_score, f1_score, recall_score
 
-csv.field_size_limit(sys.maxsize)
+from Utils import *
 
-def Recall(model_file, in_file, in_type, out_file, probability=False, test=False):
+def Recall(model_file, in_file, in_type, out_file, test_mode, probability=False):
 
-  testcases,test_classes = [],[]
-
-  if ".gz" in in_file:
-    infile = gzip.open(in_file, "r")
-  else:
-    infile = open(in_file, "r")
- 
-  csvreader = csv.reader(infile, delimiter='\t')
+  model = load_model(model_file)
+  csvreader = open_csv(in_file)
  
   outfile = open(out_file, "a+")
   csvwriter = csv.writer(outfile, delimiter='\t')
 
-  model = pickle.load(gzip.open(model_file))
-
   x = dict()
-  x[in_type] = []
 
-  for row in csvreader:
-    testcase, features = row[0], row[1]
-    testcases.append(testcase)
-
-    if test:
-      test_classes.append(int(row[2]))
-
-    x[in_type].append(features)
+  testcases, features, test_classes = read_traces(csvreader, in_file, None, cut=None) 
+  x[in_type] = features
 
   if probability:
     predicted_classes = map(lambda x: x[1], model.predict_proba(x)) # probability of the second class
   else:
     predicted_classes = model.predict(x)
   
-  #print predicted_classes
-
   for testcase,y in zip(testcases,predicted_classes):
     csvwriter.writerow([testcase,y])
 
-  if test:
-    #print confusion_matrix(test_classes, predicted_classes)
+  if test_mode == "simple":
     nclasses = len(set(test_classes))
 
     if nclasses == 1:
@@ -55,8 +38,34 @@ def Recall(model_file, in_file, in_type, out_file, probability=False, test=False
       err[1 - test_classes[0]] = 1.0
     else: 
       err = recall_score(test_classes, predicted_classes, average=None)
-    #print err
+    
     print err[0], err[1], sum(err)/2.0
-    #print classification_report(test_classes, predicted_classes)
+    print classification_report(test_classes, predicted_classes)
+
+  elif test_mode == "aggregated":
+
+
+    #print len(testcases), len(predicted_classes), len(test_classes)
+    prog_pred = dict()
+
+    for (program, predicted, real) in zip(testcases, predicted_classes, test_classes):
+      prog_pred[program] = prog_pred.get(program,[]) + [abs(predicted-real)]
+
+    print round(numpy.mean(map(numpy.mean, prog_pred.values())),2)
+
+    # BROKEN!
+    #prog_classes = dict()
+    #for prog,cl in zip(testcases, test_classes):
+    #  prog_classes[prog] = cl
+
+    #prog_pred = dict(zip(prog_classes.keys(), [[]]*len(prog_classes)))
+    #for prog, pred in zip(testcases,predicted_classes):
+    #  prog_pred[prog].append(abs(pred - prog_classes[prog]))
+ 
+    #errors = []
+    #for prog, preds in prog_pred.items():
+    #  errors.append(sum(preds)/float(len(preds)))
+  
+    #print sum(errors) / float(len(errors))
 
 

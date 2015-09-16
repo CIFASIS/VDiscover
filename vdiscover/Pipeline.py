@@ -16,10 +16,12 @@ along with VDISCOVER. If not, see <http://www.gnu.org/licenses/>.
 
 Copyright 2014 by G.Grieco
 """
+import os
 
 from sklearn.base import  BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB,  MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD, PCA
@@ -75,12 +77,23 @@ class CutoffMax(BaseEstimator, TransformerMixin):
 def make_train_pipeline(ftype):
   
   if ftype is "dynamic":
+
+    realpath = os.path.dirname(os.path.realpath(__file__))
+    f = open(realpath+"/data/dyn_events.dic")
+
+    event_dict = []
+
+    for line in f.readlines():
+        event_dict.append(line.replace("\n",""))
+
     return Pipeline(steps=[
          ('selector', ItemSelector(key='dynamic')),
-         ('dvectorizer', CountVectorizer(tokenizer=static_tokenizer, ngram_range=(1,1), lowercase=False)),
-         ('todense', DenseTransformer()),
-         ('cutfoff', CutoffMax(16)),
-         ('classifier', RandomForestClassifier(n_estimators=1000, max_features=None, max_depth=100, class_weight="auto"))
+         ('dvectorizer', CountVectorizer(tokenizer=dynamic_tokenizer, ngram_range=(1,3), lowercase=False, vocabulary=event_dict)),
+         #('todense', DenseTransformer()),
+         #('cutfoff', CutoffMax(16)),
+         ('classifier', RandomForestClassifier(n_estimators=1000, max_features=None, max_depth=100))
+         #('classifier',  GaussianNB())
+
     ])
   elif ftype is "static":
     return Pipeline(steps=[
@@ -120,9 +133,6 @@ def make_cluster_pipeline_subtraces(ftype):
     assert(0)
 
 
-
-
-
 try:
   from keras.preprocessing import sequence
 except:
@@ -146,18 +156,9 @@ class DeepReprPreprocessor:
     cut_y_data = []
     for i,x in enumerate(X_data[:760]):
 
-      #i = randint(0, X_size-1)
-      
       raw_trace = x[:-1]
       trace = raw_trace.split(" ")
-      #print trace 
-
       size = len(trace)
-      #if size < 5:
-      #  continue
-      #end = (self.max_len) #- size
-      #new_trace = " ".join(trace[:end])
-      #cut_X_data.append(new_trace)
 
       start = size - (self.max_len)
       start = randint(0, max(start,0))
