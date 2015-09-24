@@ -20,19 +20,18 @@ Copyright 2014 by G.Grieco
 import pickle
 
 from Utils import *
-from Pipeline import * 
+from Pipeline import *
 from sklearn.metrics import confusion_matrix
 
 def TrainScikitLearn(model_file, train_file, valid_file, ftype, nsamples):
 
-  csvreader = open_csv(train_file) 
+  csvreader = open_csv(train_file)
   modelfile = open_model(model_file)
-  train_programs, train_features, train_classes = read_traces(csvreader, train_file, nsamples, cut=None) 
- 
+  train_programs, train_features, train_classes = read_traces(csvreader, train_file, nsamples, cut=None)
   print "using", len(train_features),"examples to train."
 
   train_dict = dict()
-  train_dict[ftype] = train_features 
+  train_dict[ftype] = train_features
 
   print "Transforming data and fitting model.."
   model = make_train_pipeline(ftype)
@@ -46,14 +45,14 @@ def TrainScikitLearn(model_file, train_file, valid_file, ftype, nsamples):
   modelfile.write(pickle.dumps(model))
 
 def TrainKeras(model_file, train_file, valid_file, ftype, nsamples):
- 
-  csvreader = open_csv(train_file) 
+
+  csvreader = open_csv(train_file)
   modelfile = open_model(model_file)
 
   train_features = []
   train_programs = []
   train_classes = []
-  
+
   print "Reading and sampling data to train..",
   if nsamples is None:
     for i,(program, features, cl) in enumerate(csvreader):
@@ -61,12 +60,12 @@ def TrainKeras(model_file, train_file, valid_file, ftype, nsamples):
       train_features.append(features)
       train_classes.append(int(cl))
   else:
-    
+
     train_size = file_len(in_file)
     skip_until = random.randint(0,train_size - nsamples)
 
     for i,(program, features, cl) in enumerate(csvreader):
- 
+
       if i < skip_until:
         continue
       elif i - skip_until == nsamples:
@@ -84,7 +83,7 @@ def TrainKeras(model_file, train_file, valid_file, ftype, nsamples):
   train_dict = dict()
   train_dict[ftype] = train_features
   batch_size = 16
-  window_size = 25 
+  window_size = 25
 
   from keras.preprocessing.text import Tokenizer
 
@@ -96,12 +95,12 @@ def TrainKeras(model_file, train_file, valid_file, ftype, nsamples):
   preprocessor = KerasPreprocessor(tokenizer, window_size, batch_size)
 
   if valid_file is not None:
-    csvreader = open_csv(valid_file) 
+    csvreader = open_csv(valid_file)
 
     valid_features = []
     valid_programs = []
     valid_classes = []
-  
+
     print "Reading data to valid..",
     for i,(program, features, cl) in enumerate(csvreader):
       valid_programs.append(program)
@@ -126,7 +125,7 @@ def TrainKeras(model_file, train_file, valid_file, ftype, nsamples):
   print "Creating and compiling a LSTM.."
   model = Sequential()
   model.add(Embedding(max_features, 10))
-  model.add(LSTM(10, 32)) 
+  model.add(LSTM(10, 32))
   model.add(Dropout(0.50))
   model.add(Dense(32, 1))
   model.add(Activation('sigmoid'))
@@ -138,7 +137,7 @@ def TrainKeras(model_file, train_file, valid_file, ftype, nsamples):
   model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=5, show_accuracy=True)
 
   print "Saving model to",model_file
-  
+
   modelfile.write(pickle.dumps(KerasPredictor(preprocessor,model,ftype)))
 
 

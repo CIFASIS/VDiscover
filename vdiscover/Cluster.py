@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 from Utils import *
-from Pipeline import * 
+from Pipeline import *
 
 def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
 
@@ -40,8 +40,8 @@ def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
   #print preprocessor.tokenizer.word_counts
   max_features = len(preprocessor.tokenizer.word_counts)
 
-  batch_size = 300
-  window_size = 100
+  batch_size = 100
+  window_size = 300
   maxlen = window_size
 
   embedding_dims = 20
@@ -49,41 +49,13 @@ def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
   filter_length = 3
   hidden_dims = 250
 
-  csvreader = open_csv(train_file) 
-
-  train_features = []
-  train_programs = []
-  train_classes = [] 
-
-  print "Reading and sampling data to train..",
-  for i,col in enumerate(csvreader):
-
-    program = col[0]
-    features = col[1]
-    if len(col) > 2:
-      cl = col[2]
-    else:
-      cl = 0
-
-    train_programs.append(program)
-    train_features.append(features)
-    train_classes.append(cl)
-
+  csvreader = open_csv(train_file)
+  print "Reading and sampling data to train.."
+  train_programs, train_features, train_classes = read_traces(csvreader, train_file, nsamples, cut=None)
   train_size = len(train_features)
 
-  #from keras.preprocessing.text import Tokenizer
-
-  #tokenizer = Tokenizer(nb_words=None, filters="", lower=False, split=" ")
-  #print type(train_features[0])
-  #tokenizer.fit_on_texts(train_features)
-  #max_features = len(tokenizer.word_counts)
-
-  #preprocessor = FilterPreprocessor(tokenizer, window_size, batch_size)
-  y = train_programs
-  y = train_classes
-  y = None
-  X_train, labels = preprocessor.preprocess_traces(train_features, y, 300)
-  #print X_train[5]
+  #y = train_programs
+  X_train, y_train, labels = preprocessor.preprocess_traces(train_features, y_data=train_classes, labels=train_programs)
 
   from keras.preprocessing import sequence
   from keras.optimizers import RMSprop
@@ -133,22 +105,40 @@ def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
   model = make_cluster_pipeline_subtraces(ftype)
   X_red = model.fit_transform(train_dict)
 
+  from sklearn.cluster import MeanShift, estimate_bandwidth
+
+  bandwidth = estimate_bandwidth(X_red, quantile=0.2)
+  print "Clustering with bandwidth:", bandwidth
+
+  af = MeanShift(bandwidth=bandwidth/5).fit(X_red)
+
+  cluster_centers = af.cluster_centers_
+  cluster_labels = af.labels_
+  n_clusters = len(cluster_centers)
+
   plt.figure()
   print len(X_red), len(labels)
+  colors = 'rbgcmykbgrcmykbgrcmykbgrcmyk'
+  ncolors = len(colors)
 
-  for ([x,y],label) in zip(X_red,labels):
-    x = gauss(0,0.05) + x
-    y = gauss(0,0.05) + y
-    plt.scatter(x, y)
-    plt.text(x, y+0.2, label)
+  for ([x,y],label, cluster_label) in zip(X_red,labels, cluster_labels):
+    x = gauss(0,0.1) + x
+    y = gauss(0,0.1) + y
+    plt.scatter(x, y, c = colors[cluster_label % ncolors])
+    #plt.text(x-0.05, y+0.01, label.split("-")[-1].split(".")[0])
 
+  for i,[x,y] in enumerate(cluster_centers):
+    plt.plot(x, y, 'o', markerfacecolor=colors[i % ncolors],
+             markeredgecolor='k', markersize=7)
+
+  plt.title('Estimated number of clusters: %d' % n_clusters)
 
   plt.show()
- 
+
 
 def TrainDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
- 
-  csvreader = open_csv(train_file) 
+
+  csvreader = open_csv(train_file)
 
   train_features = []
   train_programs = []
@@ -163,7 +153,7 @@ def TrainDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
   filter_length = 3
   hidden_dims = 250
   nb_epoch = 50
- 
+
   print "Reading and sampling data to train..",
   for i,col in enumerate(csvreader):
 
@@ -179,7 +169,7 @@ def TrainDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
     train_classes.append(cl)
 
   #assert(0)
-   
+
   train_size = len(train_features)
 
   from keras.preprocessing.text import Tokenizer
@@ -254,14 +244,14 @@ def TrainDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
   modelfile.write(pickle.dumps(model, protocol=2))
 
 def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
- 
+
   #import matplotlib.pyplot as plt
   #import matplotlib as mpl
 
-  csvreader = open_csv(train_file) 
-  train_programs, train_features, train_classes = read_traces(csvreader, train_file, nsamples) 
+  csvreader = open_csv(train_file)
+  train_programs, train_features, train_classes = read_traces(csvreader, train_file, nsamples)
   train_size = len(train_programs)
- 
+
   print "using", train_size,"examples to train."
 
   train_dict = dict()
@@ -269,56 +259,23 @@ def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
   #batch_size = 16
   #window_size = 20
 
-  #from sklearn.cluster import MeanShift
+  from sklearn.cluster import MeanShift
 
   print "Transforming data and fitting model.."
   model = make_cluster_pipeline_bow(ftype)
-  train_X = model.fit_transform(train_dict)
+  X_red = model.fit_transform(train_dict)
 
   mpl.rcParams.update({'font.size': 10})
   plt.figure()
   colors = 'brgcmykbgrcmykbgrcmykbgrcmyk'
 
-  for prog,[x,y],cl in zip(train_programs, train_X, train_classes):
-    #x = gauss(0,0.2) + x
-    #y = gauss(0,0.2) + y
+  for prog,[x,y],cl in zip(train_programs, X_red, train_classes):
+    x = gauss(0,0.1) + x
+    y = gauss(0,0.1) + y
     plt.scatter(x, y, c=colors[cl])
     plt.text(x, y+0.2, prog.split("-")[-1])
 
-  if valid_file is not None:
-    csvreader = open_csv(valid_file) 
-
-    valid_features = []
-    valid_programs = []
-    valid_classes = []
-  
-    print "Reading data to valid..",
-    for i,(program, features) in enumerate(csvreader):
-      valid_programs.append(program)
-      valid_features.append(features)
-      valid_classes.append(int(cl))
-
-    print "using", len(train_features),"examples to valid."
-    #X_valid,y_valid = preprocessor.preprocess(valid_features, valid_classes)
-  else:
-    plt.show()
-    return
-
-  valid_dict = dict()
-  valid_dict[ftype] = valid_features
-  valid_X = model.fit_transform(valid_dict)
-
-  for [x,y] in valid_X:
-    rx = gauss(0,0.2) + x
-    ry = gauss(0,0.2) + y
-    
-    plt.scatter(rx,ry, c='r')
-    #plt.text(x, y, valid_programs[i])
-
-  plt.show()
-  return
-
-  af = MeanShift().fit(X) 
+  af = MeanShift().fit(X_red)
 
   cluster_centers = af.cluster_centers_
   labels = af.labels_
@@ -331,11 +288,11 @@ def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
   for k, col in zip(range(n_clusters_), colors):
     my_members = labels == k
     cluster_center = cluster_centers[k]
-    plt.plot(X[my_members, 0], X[my_members, 1], col + '.')
+    plt.plot(X_red[my_members, 0], X_red[my_members, 1], col + '.')
     plt.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
              markeredgecolor='k', markersize=14)
-    
-  
+
+
   plt.title('Estimated number of clusters: %d' % n_clusters_)
   plt.show()
 
@@ -345,7 +302,6 @@ def Cluster(model_file, out_file, train_file, valid_file, ttype, ftype, nsamples
   if ttype == "cluster":
 
     ClusterScikit(out_file, train_file, valid_file, ftype, nsamples)
-    return
 
     try:
       import keras
@@ -353,7 +309,7 @@ def Cluster(model_file, out_file, train_file, valid_file, ttype, ftype, nsamples
       print "Failed to import keras modules to perform LSTM training"
       return
 
-    if model_file is None:      
+    if model_file is None:
       TrainDeepRepr(out_file, train_file, valid_file, ftype, nsamples)
     else:
       PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples)

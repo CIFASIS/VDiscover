@@ -75,7 +75,7 @@ class CutoffMax(BaseEstimator, TransformerMixin):
 
 
 def make_train_pipeline(ftype):
-  
+
   if ftype is "dynamic":
 
     realpath = os.path.dirname(os.path.realpath(__file__))
@@ -105,7 +105,7 @@ def make_train_pipeline(ftype):
   else:
     assert(0)
 
-def make_cluster_pipeline_bow(ftype): 
+def make_cluster_pipeline_bow(ftype):
   if ftype is "dynamic":
     return Pipeline(steps=[
          ('selector', ItemSelector(key='dynamic')),
@@ -120,7 +120,7 @@ def make_cluster_pipeline_bow(ftype):
   else:
     assert(0)
 
-def make_cluster_pipeline_subtraces(ftype): 
+def make_cluster_pipeline_subtraces(ftype):
   if ftype is "dynamic":
     return Pipeline(steps=[
          ('selector', ItemSelector(key='dynamic')),
@@ -131,6 +131,8 @@ def make_cluster_pipeline_subtraces(ftype):
     raise NotImplemented
   else:
     assert(0)
+
+
 
 
 try:
@@ -146,71 +148,62 @@ class DeepReprPreprocessor:
     self.max_len = max_len
     self.batch_size = batch_size
 
-  def preprocess_traces(self, X_data, labels=None, cut_size=1):
+  def preprocess_traces(self, X_data, y_data=None, labels=None):
 
     cut_X_data = []
     cut_label_data = []
+    cut_y_data = []
 
     X_size = len(X_data)
 
-    cut_y_data = []
-    for i,x in enumerate(X_data[:760]):
+    for i,x in enumerate(X_data):
+
+      #i = randint(0, X_size-1)
 
       raw_trace = x[:-1]
       trace = raw_trace.split(" ")
+
       size = len(trace)
 
       start = size - (self.max_len)
       start = randint(0, max(start,0))
       new_trace = " ".join(trace[start:(start+size)])
       cut_X_data.append(new_trace)
- 
-      if labels is None:
-        cut_label_data.append("+"+str(size))
-      else:
-        #label = labels[i].split("-")[-1]
-        #if label[0] == 'x':
+
+      if labels is not None:
         cut_label_data.append(labels[i])
-        #else:
-        #  cut_label_data.append("")
-       
+      else:
+        cut_label_data.append("+"+str(size))
 
-
-      #new_trace = [0]* (self.max_len / 2)
-
-      #i = randint(0, X_size-34)
-      #new_trace = ""
-      #start = size - (self.max_len)
-      #new_trace = " ".join(trace[start:])
-      #cut_X_data.append(new_trace)
-      #cut_label_data.append("-"+str(size))
+      if y_data is not None:
+        cut_y_data.append(y_data[i])
+      else:
+        cut_y_data.append(0)
 
     X_train = self.tokenizer.texts_to_sequences(cut_X_data)
     labels = cut_label_data
-    X_train,labels = zip(*filter(lambda (x,y): not (x == []), zip(X_train,labels)))
-    #X_train = filter(lambda x: not (x == []), X_train)
+    y_train = cut_y_data
+    X_train,y_train,labels = zip(*filter(lambda (x,y,z): not (x == []), zip(X_train,y_train,labels)))
 
 
     X_size = len(X_train)
-    #X_train = X_train[:(X_size-(X_size % self.batch_size))] 
     X_train = sequence.pad_sequences(X_train, maxlen=self.max_len)
-    return X_train, labels
- 
+    return X_train, y_train, labels
+
   def preprocess(self, X_data, cut_size=1):
 
     cut_X_data = []
     cut_y_data = []
     self.classes = []
     X_size = len(X_data)
-    #assert(0)
     stats = dict()
 
     for _ in xrange(1000):
-      
+
       i = randint(0, X_size-1)
-      
+
       raw_trace = X_data[i][:-1]
-      trace = raw_trace.split(" ") 
+      trace = raw_trace.split(" ")
 
       size = len(trace)
 
@@ -223,35 +216,40 @@ class DeepReprPreprocessor:
 
 
     for y in set(cut_y_data):
-      stats[y] = float(cut_y_data.count(y)) / len(cut_y_data) 
+      stats[y] = float(cut_y_data.count(y)) / len(cut_y_data)
 
-    print stats, sum(stats.values())
-    #assert(0)
+    #print stats, sum(stats.values())
 
     cut_y_data = []
     for _ in xrange(cut_size):
 
       i = randint(0, X_size-1)
-      
+
       raw_trace = X_data[i][:-1]
-      trace = raw_trace.split(" ") 
+      trace = raw_trace.split(" ")
 
       size = len(trace)
 
-      start = randint(0, size-2)
-      end = randint(start, size-2)#start + randint(0, self.max_len)
+      start = randint(0, size-4)
+      end = randint(start, size-4)#start + randint(0, self.max_len)
 
       new_trace = " ".join(trace[start:(end+1)])
-      last_event = trace[end+1].split(":")
+      last_event = trace[end+3].split(":")
       cl = last_event[0]
+
+      #print raw_trace
+      #print start,end
+      #print new_trace
+      #print cl
+      #assert(0)
 
       #if len(last_event) > 1:
       #  print cl, last_event[1]
       if cl in stats:
         if random() <= stats[cl]:
           continue
-    
- 
+
+
       cut_X_data.append(new_trace)
 
       if cl not in self.classes:
@@ -265,26 +263,19 @@ class DeepReprPreprocessor:
 
     X_train = self.tokenizer.texts_to_sequences(cut_X_data)
 
-    #for y in set(cut_y_data):
-    #    print self.classes[y],float(cut_y_data.count(y)) / len(cut_y_data) * 100
- 
     y_train = []
 
     for y in cut_y_data:
         v = [0]*len(self.classes)
         v[y] = 1
         y_train.append(v)
- 
-    #if y_train is not None:
-    #  X_train,y_train = zip(*filter(lambda (x,y): not (x == []), zip(X_train,y_train)))
-    #else:
+
     X_train = filter(lambda x: not (x == []), X_train)
 
-
     X_size = len(X_train)
-    X_train = X_train[:(X_size-(X_size % self.batch_size))] 
+    X_train = X_train[:(X_size-(X_size % self.batch_size))]
     X_train = sequence.pad_sequences(X_train, maxlen=self.max_len)
-   
+
     if y_train is not None:
       y_train = y_train[:(X_size-(X_size % self.batch_size))]
       return X_train,y_train
@@ -293,15 +284,13 @@ class DeepReprPreprocessor:
 
 
 
-
- 
 class KerasPreprocessor:
 
   def __init__(self, tokenizer, max_len, batch_size):
     self.tokenizer = tokenizer
     self.max_len = max_len
     self.batch_size = batch_size
- 
+
   def preprocess(self, X_data, y_data=None, cut_size=1):
 
     cut_X_data = []
@@ -311,9 +300,9 @@ class KerasPreprocessor:
     for _ in xrange(cut_size):
 
       i = randint(0, X_size-1)
-      
+
       raw_trace = X_data[i]
-      trace = raw_trace.split(" ") 
+      trace = raw_trace.split(" ")
 
       size = len(trace)
 
@@ -329,7 +318,7 @@ class KerasPreprocessor:
 
     X_train = self.tokenizer.texts_to_sequences(cut_X_data)
     y_train = cut_y_data
- 
+
     if y_train is not None:
       X_train,y_train = zip(*filter(lambda (x,y): not (x == []), zip(X_train,y_train)))
     else:
@@ -337,9 +326,9 @@ class KerasPreprocessor:
 
 
     X_size = len(X_train)
-    X_train = X_train[:(X_size-(X_size % self.batch_size))] 
+    X_train = X_train[:(X_size-(X_size % self.batch_size))]
     X_train = sequence.pad_sequences(X_train, maxlen=self.max_len)
-   
+
     if y_train is not None:
       y_train = y_train[:(X_size-(X_size % self.batch_size))]
       return X_train,y_train
@@ -349,7 +338,7 @@ class KerasPreprocessor:
 
   def preprocess_one(self, raw_trace, sample_size=100):
 
-    trace = raw_trace.split(" ") 
+    trace = raw_trace.split(" ")
     size = len(trace)
     cut_X_data = []
     #print trace
@@ -367,8 +356,8 @@ class KerasPreprocessor:
 
     X_size = len(X_train)
     X_train = X_train[:(X_size-(X_size % self.batch_size))]
-    #print "X_size", X_size-(X_size % self.batch_size) 
- 
+    #print "X_size", X_size-(X_size % self.batch_size)
+
     X_train = sequence.pad_sequences(X_train, maxlen=self.max_len)
     return X_train
 
@@ -402,3 +391,5 @@ class KerasPredictor:
           X_predictions.append(0)
 
       return X_predictions
+
+
