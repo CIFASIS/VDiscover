@@ -30,7 +30,7 @@ def file_len(fname):
   else:
     cat = "cat"
 
-  p = subprocess.Popen(cat + " " + fname + " | wc -l", shell=True, stdout=subprocess.PIPE, 
+  p = subprocess.Popen(cat + " " + fname + " | wc -l", shell=True, stdout=subprocess.PIPE,
                                                                      stderr=subprocess.PIPE)
   result, err = p.communicate()
   if p.returncode != 0:
@@ -38,7 +38,7 @@ def file_len(fname):
   return int(result.strip().split()[0])
 
 def open_csv(in_file):
-  
+
   if ".gz" in in_file:
     infile = gzip.open(in_file, "r")
   else:
@@ -47,22 +47,22 @@ def open_csv(in_file):
   return csv.reader(infile, delimiter='\t')
 
 def load_model(model_file):
-  
+
   if ".pklz" in model_file:
     modelfile = gzip.open(model_file,"r")
   else:
     modelfile = open(model_file,"r")
-  
+
   model = pickle.load(gzip.open(model_file))
   return model
 
 def open_model(model_file):
-  
+
   if ".pklz" in model_file:
     modelfile = gzip.open(model_file,"w+")
   else:
     modelfile = open(model_file,"w+")
- 
+
   return modelfile
 
 def read_traces(csvreader, train_file, nsamples, cut=None, maxsize=50):
@@ -70,10 +70,14 @@ def read_traces(csvreader, train_file, nsamples, cut=None, maxsize=50):
   train_features = []
   train_programs = []
   train_classes = []
-  
+
   #print "Reading and sampling data to train..",
   if nsamples is None:
     for i,col in enumerate(csvreader):
+
+      if len(col) < 2:
+        print "Ignoring line", i, ":", col.join("\t")
+        continue
 
       program = col[0]
       features = col[1]
@@ -98,19 +102,19 @@ def read_traces(csvreader, train_file, nsamples, cut=None, maxsize=50):
           #end = random.randint(size/2+1, size)
           start = random.randint(0,size)
           end = start + maxsize
- 
-          features = " ".join(trace[start:end+1]) 
- 
+
+          features = " ".join(trace[start:end+1])
+
           train_programs.append(program)
           train_features.append(features)
           train_classes.append(cl)
   else:
-    
+
     train_size = file_len(train_file)
     skip_until = random.randint(0,train_size - nsamples)
 
     for i,col in enumerate(csvreader):
- 
+
       if i < skip_until:
         continue
       elif i - skip_until == nsamples:
@@ -139,12 +143,12 @@ def read_traces(csvreader, train_file, nsamples, cut=None, maxsize=50):
           #end = random.randint(size/2+1, size)
           start = random.randint(0,size-2)
           end = start + random.randint(1,size-1)
- 
-          features = " ".join(trace[start:end+1]) 
- 
+
+          features = " ".join(trace[start:end+1])
+
           train_programs.append(program)
           train_features.append(features)
           train_classes.append(cl)
 
 
-  return train_programs, train_features, train_classes 
+  return train_programs, train_features, train_classes
