@@ -25,9 +25,9 @@ from sklearn.metrics import confusion_matrix
 
 def TrainScikitLearn(model_file, train_file, valid_file, ftype, nsamples):
 
-  csvreader = open_csv(train_file)
+  #csvreader = open_csv(train_file)
   modelfile = open_model(model_file)
-  train_programs, train_features, train_classes = read_traces(csvreader, train_file, nsamples, cut=None)
+  train_programs, train_features, train_classes = read_traces(train_file, nsamples, cut=None)
   print "using", len(train_features),"examples to train."
 
   train_dict = dict()

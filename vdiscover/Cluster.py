@@ -49,9 +49,9 @@ def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
   filter_length = 3
   hidden_dims = 250
 
-  csvreader = open_csv(train_file)
+  #csvreader = load_csv(train_file)
   print "Reading and sampling data to train.."
-  train_programs, train_features, train_classes = read_traces(csvreader, train_file, nsamples, cut=None)
+  train_programs, train_features, train_classes = read_traces(train_file, nsamples, cut=None)
   train_size = len(train_features)
 
   #y = train_programs
@@ -134,6 +134,12 @@ def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
   plt.title('Estimated number of clusters: %d' % n_clusters)
 
   plt.show()
+
+  csvwriter = open_csv(train_file+".clusters")
+  for (label, cluster_label) in zip(labels, cluster_labels):
+    csvwriter.writerow([label, cluster_label])
+
+  print "Clusters dumped!"
 
 
 def TrainDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
@@ -301,7 +307,7 @@ def Cluster(model_file, out_file, train_file, valid_file, ttype, ftype, nsamples
 
   if ttype == "cluster":
 
-    ClusterScikit(out_file, train_file, valid_file, ftype, nsamples)
+    #ClusterScikit(out_file, train_file, valid_file, ftype, nsamples)
 
     try:
       import keras

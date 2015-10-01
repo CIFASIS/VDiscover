@@ -37,7 +37,7 @@ def file_len(fname):
       raise IOError(err)
   return int(result.strip().split()[0])
 
-def open_csv(in_file):
+def load_csv(in_file):
 
   if ".gz" in in_file:
     infile = gzip.open(in_file, "r")
@@ -45,6 +45,16 @@ def open_csv(in_file):
     infile = open(in_file, "r")
 
   return csv.reader(infile, delimiter='\t')
+
+
+def open_csv(in_file):
+
+  if ".gz" in in_file:
+    infile = gzip.open(in_file, "a+")
+  else:
+    infile = open(in_file, "a+")
+
+  return csv.writer(infile, delimiter='\t')
 
 def load_model(model_file):
 
@@ -65,8 +75,9 @@ def open_model(model_file):
 
   return modelfile
 
-def read_traces(csvreader, train_file, nsamples, cut=None, maxsize=50):
+def read_traces(train_file, nsamples, cut=None, maxsize=50):
 
+  csvreader = load_csv(train_file)
   train_features = []
   train_programs = []
   train_classes = []
