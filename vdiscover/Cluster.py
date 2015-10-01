@@ -32,9 +32,20 @@ from Pipeline import *
 
 def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
 
-  f = gzip.open(model_file)
-  old_model = pickle.load(f)
-  preprocessor = old_model.mypreprocessor
+  f = gzip.open(model_file+".pre")
+  preprocessor = pickle.load(f)
+
+  import h5py
+  f = h5py.File(model_file+".wei")
+
+  layers = []
+  for k in range(f.attrs['nb_layers']):
+            g = f['layer_{}'.format(k)]
+            layers.append([g['param_{}'.format(p)] for p in range(g.attrs['nb_params'])])
+
+  #assert(0)
+
+  #preprocessor = old_model.mypreprocessor
 
   #print preprocessor.tokenizer
   #print preprocessor.tokenizer.word_counts
@@ -69,7 +80,7 @@ def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
 
   # we start off with an efficient embedding layer which maps
   # our vocab indices into embedding_dims dimensions
-  new_model.add(Embedding(max_features, embedding_dims, weights=old_model.layers[0].get_weights()))
+  new_model.add(Embedding(max_features, embedding_dims, weights=layers[0]))
   new_model.add(Dropout(0.25))
 
   # we add a Convolution1D, which will learn nb_filters
@@ -80,7 +91,7 @@ def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
                         border_mode="valid",
                         activation="relu",
                         subsample_length=1,
-                        weights=old_model.layers[2].get_weights()))
+                        weights=layers[2]))
 
   # we use standard max pooling (halving the output of the previous layer):
   new_model.add(MaxPooling1D(pool_length=2))
@@ -93,7 +104,7 @@ def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
   output_size = nb_filters * (((maxlen - filter_length) / 1) + 1) / 2
 
   # We add a vanilla hidden layer:
-  new_model.add(Dense(output_size, hidden_dims, weights=old_model.layers[5].get_weights()))
+  new_model.add(Dense(output_size, hidden_dims, weights=layers[5]))
   #new_model.add(Dropout(0.25))
   #new_model.add(Activation('relu'))
 
@@ -151,31 +162,16 @@ def TrainDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
   train_classes = []
 
   batch_size = 100
-  window_size = 100
+  window_size = 300
   maxlen = window_size
 
   embedding_dims = 20
   nb_filters = 250
   filter_length = 3
   hidden_dims = 250
-  nb_epoch = 50
+  nb_epoch = 1
 
-  print "Reading and sampling data to train..",
-  for i,col in enumerate(csvreader):
-
-    program = col[0]
-    features = col[1]
-    cl = 0
-    #pfeatures = features.split(" ")[:-1]
-    #r = random.randint(1, len(pfeatures)-1)
-
-    train_programs.append(program)
-    train_features.append(features)
-    #cl = pfeatures[r].split(":")[0]
-    train_classes.append(cl)
-
-  #assert(0)
-
+  train_programs, train_features, train_classes = read_traces(train_file, nsamples, cut=None)
   train_size = len(train_features)
 
   from keras.preprocessing.text import Tokenizer
@@ -242,13 +238,18 @@ def TrainDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
   model.fit(X_train, y_train, validation_split=0.1, batch_size=batch_size, nb_epoch=nb_epoch, show_accuracy=True)
 
   model.mypreprocessor = preprocessor
-
-  sys.setrecursionlimit(sys.maxsize)
-  model_file = "cluster.pklz"
-  modelfile = open_model(model_file)
+  model_file = "cluster-weights.hdf5"
+  #modelfile = open_model(model_file)
   print "Saving model to",model_file
-  modelfile.write(pickle.dumps(model, protocol=2))
+  model.save_weights(model_file)
 
+  model_file = "cluster-preprocessor.pklz"
+  modelfile = open_model(model_file)
+  print "Saving preprocessor to",model_file
+  #model.save_weights(model_file)
+  modelfile.write(pickle.dumps(preprocessor, protocol=2))
+
+"""
 def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
 
   #import matplotlib.pyplot as plt
@@ -301,7 +302,7 @@ def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
 
   plt.title('Estimated number of clusters: %d' % n_clusters_)
   plt.show()
-
+"""
 
 def Cluster(model_file, out_file, train_file, valid_file, ttype, ftype, nsamples):
 
