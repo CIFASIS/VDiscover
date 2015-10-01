@@ -12,7 +12,7 @@ setup(
     url='http://vdiscover.org/',
     author='G.Grieco',
     author_email='gg@cifasis-conicet.gov.ar',
-    scripts=['fextractor', 'vpredictor', 'tcreator', 'vdp'],
+    scripts=['fextractor', 'vpredictor', 'tcreator', 'vd'],
     install_requires=[
         "python-ptrace",
         "scikit-learn"

@@ -1,0 +1,67 @@
+#!/usr/bin/python2
+
+"""
+This file is part of VDISCOVER.
+
+VDISCOVER is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+VDISCOVER is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with VDISCOVER. If not, see <http://www.gnu.org/licenses/>.
+
+Copyright 2014 by G.Grieco
+"""
+
+import os
+import argparse
+import sys
+import csv
+
+#from vdiscover.Detection import WriteTestcase
+from vdiscover.Process    import Process
+from vdiscover.Printer    import TypePrinter
+from vdiscover.Cluster  import Cluster
+
+if __name__ == "__main__":
+
+    # Arguments
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument("seeds", help="", type=str, default=None)
+    parser.add_argument("vectorizer", help="", type=str, default=None)
+    parser.add_argument("cmd", help="", type=str, default=None)
+
+    options = parser.parse_args()
+    seeds = options.seeds
+    cmd = options.cmd
+    vectorizer = options.vectorizer
+    #outdir = "outdir/"++
+    program = cmd.split(" ")[0]
+    timeout = 5
+    envs = dict()
+
+    app = Process(program, envs, timeout, [], [], True)
+    prt = TypePrinter("/dev/null", program, 0)
+    traces = []
+
+    print "Extracting traces.."
+    for x,y,files in os.walk(seeds):
+      for f in files:
+        prepared_cmd = cmd.replace(program,"")
+        prepared_cmd = prepared_cmd.split("@@")
+        prepared_cmd = prepared_cmd[0].split(" ") + [x+"/".join(y)+"/"+f] + prepared_cmd[1].split(" ")
+        prepared_cmd = filter(lambda x: x<>'', prepared_cmd)
+        events = app.getData(prepared_cmd)
+        traces.append(prt.print_events(events))
+        #print prepared_cmd
+        #print traces[-1]
+    
+    Cluster(vectorizer, None, traces, None, "cluster", "dynamic", None)
+
+    

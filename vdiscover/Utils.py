@@ -77,7 +77,13 @@ def open_model(model_file):
 
 def read_traces(train_file, nsamples, cut=None, maxsize=50):
 
-  csvreader = load_csv(train_file)
+  if type(train_file) == str:
+    csvreader = load_csv(train_file)
+  elif type(train_file) == list:
+    csvreader = train_file
+  else:
+    assert(0)
+
   train_features = []
   train_programs = []
   train_classes = []
@@ -121,7 +127,12 @@ def read_traces(train_file, nsamples, cut=None, maxsize=50):
           train_classes.append(cl)
   else:
 
-    train_size = file_len(train_file)
+    if type(train_file) == str:
+      train_size = file_len(train_file)
+    elif type(train_file) == list:
+      train_size = len(csvreader)
+
+    #train_size = file_len(train_file)
     skip_until = random.randint(0,train_size - nsamples)
 
     for i,col in enumerate(csvreader):

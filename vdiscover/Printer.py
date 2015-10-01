@@ -100,3 +100,4 @@ class TypePrinter:
 
     self.csvwriter.writerow(row)
     self.outfile.flush()
+    return row
