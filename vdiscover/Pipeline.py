@@ -47,6 +47,9 @@ class DenseTransformer(TransformerMixin):
     def fit(self, X, y=None, **fit_params):
         return self
 
+    def get_params(self, deep=True):
+        return []
+
 
 class ItemSelector(BaseEstimator, TransformerMixin):
 
@@ -58,6 +61,9 @@ class ItemSelector(BaseEstimator, TransformerMixin):
 
     def transform(self, data_dict):
         return data_dict[self.key]
+
+    def get_params(self, deep=True):
+        return []
 
 class CutoffMax(BaseEstimator, TransformerMixin):
 
@@ -71,6 +77,9 @@ class CutoffMax(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None, **fit_params):
         X[self.pos] = self.maxv
         return X
+
+    def get_params(self, deep=True):
+        return []
 
 
 

@@ -46,6 +46,14 @@ def load_csv(in_file):
 
   return csv.reader(infile, delimiter='\t')
 
+def write_csv(in_file):
+
+  if ".gz" in in_file:
+    infile = gzip.open(in_file, "w")
+  else:
+    infile = open(in_file, "w")
+
+  return csv.writer(infile, delimiter='\t')
 
 def open_csv(in_file):
 

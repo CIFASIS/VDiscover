@@ -11,10 +11,7 @@ from Utils import *
 def Recall(model_file, in_file, in_type, out_file, test_mode, probability=False):
 
   model = load_model(model_file)
-  #csvreader = open_csv(in_file)
-
-  outfile = open_csv(out_file)
-  csvwriter = csv.writer(outfile, delimiter='\t')
+  csvwriter = write_csv(out_file)
 
   x = dict()
 
@@ -39,8 +36,9 @@ def Recall(model_file, in_file, in_type, out_file, test_mode, probability=False)
     else:
       err = recall_score(test_classes, predicted_classes, average=None)
 
-    print err[0], err[1], sum(err)/2.0
     print classification_report(test_classes, predicted_classes)
+    print "Errors per class:", err[0], err[1] 
+    print "Average error:", sum(err)/2.0
 
   elif test_mode == "aggregated":
 

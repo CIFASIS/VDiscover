@@ -37,9 +37,9 @@ def TrainScikitLearn(model_file, train_file, valid_file, ftype, nsamples):
   model = make_train_pipeline(ftype)
   model.fit(train_dict,train_classes)
 
-  print "Resulting model:"
-  print model
-  print confusion_matrix(train_classes, model.predict(train_dict))
+  print "Done!"
+  #print model
+  #print confusion_matrix(train_classes, model.predict(train_dict))
 
   print "Saving model to",model_file
   modelfile.write(pickle.dumps(model))
