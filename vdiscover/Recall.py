@@ -37,8 +37,8 @@ def Recall(model_file, in_file, in_type, out_file, test_mode, probability=False)
       err = recall_score(test_classes, predicted_classes, average=None)
 
     print classification_report(test_classes, predicted_classes)
-    print "Errors per class:", err[0], err[1] 
-    print "Average error:", sum(err)/2.0
+    print "Accuracy per class:", round(err[0],2), round(err[1],2)
+    print "Average accuracy:", round(sum(err)/2.0,2)
 
   elif test_mode == "aggregated":
 
