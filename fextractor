@@ -155,7 +155,7 @@ if __name__ == "__main__":
         print "Execution of",program,"failed!"
         exit(-1)
 
-      prt.print_events(original_events) 
+      prt.print_events(program,original_events) 
 
       for (i, (d, mutated)) in enumerate(mutated_input_generator):
 
@@ -163,4 +163,4 @@ if __name__ == "__main__":
           break
 
         events = app.getData(prepare_inputs(mutated))
-        prt.print_events(events)
+        prt.print_events(program,events)

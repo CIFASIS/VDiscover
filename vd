@@ -20,48 +20,77 @@ Copyright 2014 by G.Grieco
 """
 
 import os
+import os.path
 import argparse
 import sys
 import csv
+import random 
+
+csv.field_size_limit(sys.maxsize)
+sys.setrecursionlimit(1024*1024*1024)
 
 #from vdiscover.Detection import WriteTestcase
 from vdiscover.Process    import Process
 from vdiscover.Printer    import TypePrinter
-from vdiscover.Cluster  import Cluster
-
+from vdiscover.Cluster  import PlotDeepRepr
+from vdiscover.Utils import update_progress
 if __name__ == "__main__":
 
     # Arguments
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument("seeds", help="", type=str, default=None)
-    parser.add_argument("vectorizer", help="", type=str, default=None)
+    parser.add_argument("-i", help="", type=str, default=None, required=True, dest="seeds")
+    parser.add_argument("-o", help="", type=str, default=None, required=True, dest="out")
+    #parser.add_argument("-v", help="", type=str, default=None, required=True, dest="vectorizer")
+    #parser.add_argument("-m", help="", type=str, default="afl", dest="fuzzer")
     parser.add_argument("cmd", help="", type=str, default=None)
 
     options = parser.parse_args()
     seeds = options.seeds
+    outfile = options.out
+    fuzzer = options.fuzzer
     cmd = options.cmd
     vectorizer = options.vectorizer
-    #outdir = "outdir/"++
     program = cmd.split(" ")[0]
+    programf = program.replace("/","__")
     timeout = 5
     envs = dict()
+    traces_path = outfile#outdir+"/traces.raw"
 
-    app = Process(program, envs, timeout, [], [], True)
-    prt = TypePrinter("/dev/null", program, 0)
-    traces = []
+    if os.path.exists(traces_path):
+      traces = traces_path
+    else:
 
-    print "Extracting traces.."
-    for x,y,files in os.walk(seeds):
-      for f in files:
+      app = Process(program, envs, timeout, [], [], True)  
+      prt = TypePrinter(traces_path, program, 0)
+      traces = []
+      all_files = []
+
+      print "Extracting traces.."
+      for x,y,files in os.walk(seeds):
+        nfiles = len(files)
+        #print "Processing directory ","./"++("/".join(y)), "with", nfiles, "seeds"
+        for f in files:
+          all_files.append(x+"/".join(y)+"/"+f)
+
+      random.shuffle(all_files)
+      nfiles = len(all_files)
+
+      for progress,testcase in enumerate(all_files):
+        #print testcase
+        progress = round(float(progress)/nfiles, 2)
+        update_progress(progress)
         prepared_cmd = cmd.replace(program,"")
         prepared_cmd = prepared_cmd.split("@@")
-        prepared_cmd = prepared_cmd[0].split(" ") + [x+"/".join(y)+"/"+f] + prepared_cmd[1].split(" ")
+        prepared_cmd = prepared_cmd[0].split(" ") + [testcase] + prepared_cmd[1].split(" ")
         prepared_cmd = filter(lambda x: x<>'', prepared_cmd)
         events = app.getData(prepared_cmd)
-        traces.append(prt.print_events(events))
+        traces.append(prt.print_events(testcase,events))
         #print prepared_cmd
         #print traces[-1]
     
-    Cluster(vectorizer, None, traces, None, "cluster", "dynamic", None)
+    #clustered_traces = PlotDeepRepr(vectorizer, traces, None, "dynamic", None, outdir)
+    #clusters = dict()
+    #for label, cluster in clustered_traces:
+    #  clusters[cluster] = clusters.get(cluster, []) + [label]
 
-    
+    #print clusters 

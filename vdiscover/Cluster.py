@@ -26,13 +26,14 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import pylab as plb
 
 from Utils import *
 from Pipeline import *
 
-def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
+def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
-  f = gzip.open(model_file+".pre")
+  f = open(model_file+".pre")
   preprocessor = pickle.load(f)
 
   import h5py
@@ -43,12 +44,6 @@ def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
             g = f['layer_{}'.format(k)]
             layers.append([g['param_{}'.format(p)] for p in range(g.attrs['nb_params'])])
 
-  #assert(0)
-
-  #preprocessor = old_model.mypreprocessor
-
-  #print preprocessor.tokenizer
-  #print preprocessor.tokenizer.word_counts
   max_features = len(preprocessor.tokenizer.word_counts)
 
   batch_size = 100
@@ -56,7 +51,7 @@ def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
   maxlen = window_size
 
   embedding_dims = 20
-  nb_filters = 250
+  nb_filters = 50
   filter_length = 3
   hidden_dims = 250
 
@@ -136,7 +131,7 @@ def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
     x = gauss(0,0.1) + x
     y = gauss(0,0.1) + y
     plt.scatter(x, y, c = colors[cluster_label % ncolors])
-    #plt.text(x-0.05, y+0.01, label.split("-")[-1].split(".")[0])
+    plt.text(x-0.05, y+0.01, label.split("/")[-1])
 
   for i,[x,y] in enumerate(cluster_centers):
     plt.plot(x, y, 'o', markerfacecolor=colors[i % ncolors],
@@ -144,13 +139,15 @@ def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
 
   plt.title('Estimated number of clusters: %d' % n_clusters)
 
+  plb.savefig(outdir+"/plot.png")
   plt.show()
+  
+  return zip(labels, cluster_labels)
+  #csvwriter = open_csv(train_file+".clusters")
+  #for (label, cluster_label) in zip(labels, cluster_labels):
+  #  csvwriter.writerow([label, cluster_label])
 
-  csvwriter = open_csv(train_file+".clusters")
-  for (label, cluster_label) in zip(labels, cluster_labels):
-    csvwriter.writerow([label, cluster_label])
-
-  print "Clusters dumped!"
+  #print "Clusters dumped!"
 
 
 def TrainDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
@@ -304,7 +301,7 @@ def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
   plt.show()
 """
 
-def Cluster(model_file, out_file, train_file, valid_file, ttype, ftype, nsamples):
+def Cluster(model_file, out_file, train_file, valid_file, ttype, ftype, nsamples, outfile):
 
   if ttype == "cluster":
 
@@ -319,4 +316,4 @@ def Cluster(model_file, out_file, train_file, valid_file, ttype, ftype, nsamples
     if model_file is None:
       TrainDeepRepr(out_file, train_file, valid_file, ftype, nsamples)
     else:
-      PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples)
+      PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples, outfile)
