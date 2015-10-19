@@ -98,8 +98,8 @@ def make_train_pipeline(ftype):
     return Pipeline(steps=[
          ('selector', ItemSelector(key='dynamic')),
          ('dvectorizer', CountVectorizer(tokenizer=dynamic_tokenizer, ngram_range=(1,3), lowercase=False, vocabulary=event_dict)),
-         #('todense', DenseTransformer()),
-         #('cutfoff', CutoffMax(16)),
+         ('todense', DenseTransformer()),
+         ('cutfoff', CutoffMax(16)),
          ('classifier', RandomForestClassifier(n_estimators=1000, max_features=None, max_depth=100))
          #('classifier',  GaussianNB())
 
