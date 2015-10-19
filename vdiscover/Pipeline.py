@@ -71,10 +71,11 @@ class CutoffMax(BaseEstimator, TransformerMixin):
         self.maxv = maxv
 
     def fit(self, x, y=None):
-        self.pos = x > self.maxv
+        #self.pos = x > self.maxv
         return self
 
     def transform(self, X, y=None, **fit_params):
+        self.pos = X > self.maxv
         X[self.pos] = self.maxv
         return X
 

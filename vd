@@ -36,6 +36,12 @@ from vdiscover.Cluster  import PlotDeepRepr
 from vdiscover.Utils import update_progress
 if __name__ == "__main__":
 
+
+    if open("/proc/sys/kernel/randomize_va_space").read().strip() != "0":
+        print("Address space layout randomization (ASLR) is enabled, disable it before continue to use the cache")
+        print("Hint: # echo 0 > /proc/sys/kernel/randomize_va_space")
+        sys.exit(-1)
+
     # Arguments
     parser = argparse.ArgumentParser(description='')
     parser.add_argument("-i", help="", type=str, default=None, required=True, dest="seeds")
@@ -47,9 +53,9 @@ if __name__ == "__main__":
     options = parser.parse_args()
     seeds = options.seeds
     outfile = options.out
-    fuzzer = options.fuzzer
+    #fuzzer = options.fuzzer
     cmd = options.cmd
-    vectorizer = options.vectorizer
+    #vectorizer = options.vectorizer
     program = cmd.split(" ")[0]
     programf = program.replace("/","__")
     timeout = 5

@@ -50,6 +50,11 @@ if __name__ == "__main__":
     # To help argparse to detect the number of columns correctly
     #os.environ['COLUMNS'] = str(os.popen('stty size', 'r').read().split()[1]) #str(shutil.get_terminal_size().columns)
 
+    if open("/proc/sys/kernel/randomize_va_space").read().strip() != "0":
+        print("Address space layout randomization (ASLR) is enabled, disable it before continue to use the cache")
+        print("Hint: # echo 0 > /proc/sys/kernel/randomize_va_space")
+        sys.exit(-1)
+
     # Arguments
     parser = argparse.ArgumentParser(description='Feature extraction of VDiscover')
     parser.add_argument("testcase", help="Testcase to analyze", type=str, default=None)

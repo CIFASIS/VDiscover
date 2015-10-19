@@ -123,7 +123,7 @@ if __name__ == "__main__":
       elif training_mode_lstm:
         Train(out_file, in_file, valid_file, "lstm", ftype, nsamples)
       elif training_mode_cluster:
-        Cluster(model_file, out_file, in_file, valid_file, "cluster", ftype, nsamples) 
+        Cluster(in_file, valid_file, ftype, nsamples)
     else:
       if model_file is None:
         print "VDiscover requires a pre-trained model to predict"

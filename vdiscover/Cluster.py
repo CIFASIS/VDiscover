@@ -246,14 +246,14 @@ def TrainDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
   #model.save_weights(model_file)
   modelfile.write(pickle.dumps(preprocessor, protocol=2))
 
-"""
+
 def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
 
   #import matplotlib.pyplot as plt
   #import matplotlib as mpl
 
-  csvreader = open_csv(train_file)
-  train_programs, train_features, train_classes = read_traces(csvreader, train_file, nsamples)
+  #csvreader = open_csv(train_file)
+  train_programs, train_features, train_classes = read_traces(train_file, nsamples)
   train_size = len(train_programs)
 
   print "using", train_size,"examples to train."
@@ -263,7 +263,7 @@ def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
   #batch_size = 16
   #window_size = 20
 
-  from sklearn.cluster import MeanShift
+  #from sklearn.cluster import MeanShift
 
   print "Transforming data and fitting model.."
   model = make_cluster_pipeline_bow(ftype)
@@ -277,43 +277,44 @@ def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
     x = gauss(0,0.1) + x
     y = gauss(0,0.1) + y
     plt.scatter(x, y, c=colors[cl])
-    plt.text(x, y+0.2, prog.split("-")[-1])
+    plt.text(x, y+0.02, prog.split("/")[-1])
 
-  af = MeanShift().fit(X_red)
-
-  cluster_centers = af.cluster_centers_
-  labels = af.labels_
-  n_clusters_ = len(cluster_centers)
-
-  plt.close('all')
-  plt.figure(1)
-  plt.clf()
-
-  for k, col in zip(range(n_clusters_), colors):
-    my_members = labels == k
-    cluster_center = cluster_centers[k]
-    plt.plot(X_red[my_members, 0], X_red[my_members, 1], col + '.')
-    plt.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
-             markeredgecolor='k', markersize=14)
-
-
-  plt.title('Estimated number of clusters: %d' % n_clusters_)
   plt.show()
-"""
+  #af = MeanShift().fit(X_red)
 
-def Cluster(model_file, out_file, train_file, valid_file, ttype, ftype, nsamples, outfile):
+  #cluster_centers = af.cluster_centers_
+  #labels = af.labels_
+  #n_clusters_ = len(cluster_centers)
 
-  if ttype == "cluster":
+  #plt.close('all')
+  #plt.figure(1)
+  #plt.clf()
 
+  #for k, col in zip(range(n_clusters_), colors):
+  #  my_members = labels == k
+  #  cluster_center = cluster_centers[k]
+  #  plt.plot(X_red[my_members, 0], X_red[my_members, 1], col + '.')
+  #  plt.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
+  #           markeredgecolor='k', markersize=14)
+
+
+  #plt.title('Estimated number of clusters: %d' % n_clusters_)
+  #plt.show()
+
+def Cluster(train_file, valid_file, ftype, nsamples):
+
+  ClusterScikit(None, train_file, valid_file, ftype, nsamples)
+
+  #if ttype == "cluster":
     #ClusterScikit(out_file, train_file, valid_file, ftype, nsamples)
 
-    try:
-      import keras
-    except:
-      print "Failed to import keras modules to perform LSTM training"
-      return
+    #try:
+    #  import keras
+    #except:
+    #  print "Failed to import keras modules to perform LSTM training"
+    #  return
 
-    if model_file is None:
-      TrainDeepRepr(out_file, train_file, valid_file, ftype, nsamples)
-    else:
-      PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples, outfile)
+    #if model_file is None:
+    #  TrainDeepRepr(out_file, train_file, valid_file, ftype, nsamples)
+    #else:
+    #  PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples, outfile)
