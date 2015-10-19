@@ -30,12 +30,12 @@ concatenate = lambda *lists: reduce((lambda a,b: a.extend(b) or a),lists,[])
 if __name__ == "__main__":
 
     # Arguments
-    parser = argparse.ArgumentParser(description='A script to create new test cases using a name and a command line')
-    parser.add_argument("--name", help="A csv with the features to train or predict", type=str, default=None)
+    parser = argparse.ArgumentParser(description='A small utility to create new test cases using a name and a command line')
+    parser.add_argument("--name", help="The name of the ", type=str, default=None)
     parser.add_argument("--cmd", help="Command-line to execute", type=str, default=None)
     parser.add_argument("--batch", help="A csv with the command lines", type=str, default=None)
 
-    parser.add_argument("--copy", help="A csv with the features to train or predict", action='store_true', default=False)
+    parser.add_argument("--copy", help="Force the copy of the files in command lines instead of symbolic linking", action='store_true', default=False)
 
     parser.add_argument("outdir", help="Output directory to write testcases", type=str, default=None)
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         if arg <> '':
           pargs = pargs + arg
       #args = concatenate(args)
-      print pargs 
+      print "Procesing '" + " ".join(pargs) + "'"
       #args = filter(lambda x: x is not '', cmd.split(" "))
       WriteTestcase(name,pargs[0],pargs[1:], copy)
 
