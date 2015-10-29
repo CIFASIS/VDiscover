@@ -31,7 +31,7 @@ import pylab as plb
 from Utils import *
 from Pipeline import *
 
-def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples, outdir):
+def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
   f = open(model_file+".pre")
   preprocessor = pickle.load(f)
@@ -139,7 +139,7 @@ def PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
   plt.title('Estimated number of clusters: %d' % n_clusters)
 
-  plb.savefig(outdir+"/plot.png")
+  #plb.savefig(outdir+"/plot.png")
   plt.show()
   
   return zip(labels, cluster_labels)

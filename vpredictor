@@ -30,7 +30,7 @@ sys.setrecursionlimit(1024*1024*1024)
 from vdiscover.Pipeline import *
 from vdiscover.Recall  import Recall
 from vdiscover.Train  import Train
-from vdiscover.Cluster  import Cluster
+from vdiscover.Cluster  import ClusterScikit, ClusterConv
 
 if __name__ == "__main__":
 
@@ -67,10 +67,13 @@ if __name__ == "__main__":
                         help="Valid a model using infile",
                         action="store", default=None)
 
-    parser.add_argument("--cluster",
-                        help="Cluster input traces",
+    parser.add_argument("--cluster-bow",
+                        help="Cluster input traces using BOW",
                         action="store_true", default=False)
 
+    parser.add_argument("--cluster-conv",
+                        help="Cluster input traces using a convolutional model",
+                        action="store_true", default=False)
 
     parser.add_argument("--train-rf",
                         help="Train a Random Forest using infile",
@@ -97,8 +100,10 @@ if __name__ == "__main__":
 
     training_mode_rf = options.train_rf
     training_mode_lstm = options.train_lstm
-    training_mode_cluster = options.cluster
-    training_mode = training_mode_rf or training_mode_lstm or training_mode_cluster
+    training_mode_cluster_bow = options.cluster_bow
+    training_mode_cluster_conv = options.cluster_conv
+
+    training_mode = training_mode_rf or training_mode_lstm or training_mode_cluster_bow or training_mode_cluster_conv
 
     probability_mode = options.prob
     nsamples = options.n_samples
@@ -120,10 +125,20 @@ if __name__ == "__main__":
     if training_mode:
       if training_mode_rf:
         Train(out_file, in_file, valid_file, "rf", ftype, nsamples)
-      elif training_mode_lstm:
-        Train(out_file, in_file, valid_file, "lstm", ftype, nsamples)
-      elif training_mode_cluster:
-        Cluster(in_file, valid_file, ftype, nsamples)
+      #elif training_mode_:
+      #  Train(out_file, in_file, valid_file, "lstm", ftype, nsamples)
+      elif training_mode_cluster_bow:
+        #Cluster(in_file, valid_file, ftype, nsamples)
+        ClusterScikit(None, in_file, valid_file, ftype, nsamples)
+      elif training_mode_cluster_conv:
+        #Cluster(in_file, valid_file, ftype, nsamples)
+        if (model_file is None):
+          print "Clustering using a convolutional model requires a pre-trained model"
+          exit(-1)
+        
+        ClusterConv(model_file, in_file, valid_file, ftype, nsamples, None)
+
+
     else:
       if model_file is None:
         print "VDiscover requires a pre-trained model to predict"

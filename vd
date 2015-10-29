@@ -32,8 +32,10 @@ sys.setrecursionlimit(1024*1024*1024)
 #from vdiscover.Detection import WriteTestcase
 from vdiscover.Process    import Process
 from vdiscover.Printer    import TypePrinter
-from vdiscover.Cluster  import PlotDeepRepr
+from vdiscover.Cluster  import ClusterScikit, ClusterConv
 from vdiscover.Utils import update_progress
+from vdiscover.Sampling import cluster_sampler 
+
 if __name__ == "__main__":
 
 
@@ -46,7 +48,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='')
     parser.add_argument("-i", help="", type=str, default=None, required=True, dest="seeds")
     parser.add_argument("-o", help="", type=str, default=None, required=True, dest="out")
-    #parser.add_argument("-v", help="", type=str, default=None, required=True, dest="vectorizer")
+    parser.add_argument("-v", help="", type=str, default=None, required=False, dest="vectorizer")
     #parser.add_argument("-m", help="", type=str, default="afl", dest="fuzzer")
     parser.add_argument("cmd", help="", type=str, default=None)
 
@@ -55,7 +57,7 @@ if __name__ == "__main__":
     outfile = options.out
     #fuzzer = options.fuzzer
     cmd = options.cmd
-    #vectorizer = options.vectorizer
+    vectorizer = options.vectorizer
     program = cmd.split(" ")[0]
     programf = program.replace("/","__")
     timeout = 5
@@ -66,7 +68,7 @@ if __name__ == "__main__":
       traces = traces_path
     else:
 
-      app = Process(program, envs, timeout, [], [], True)  
+      app = Process(program, envs, timeout, ["libcairo"], [], True)  
       prt = TypePrinter(traces_path, program, 0)
       traces = []
       all_files = []
@@ -93,10 +95,12 @@ if __name__ == "__main__":
         traces.append(prt.print_events(testcase,events))
         #print prepared_cmd
         #print traces[-1]
-    
-    #clustered_traces = PlotDeepRepr(vectorizer, traces, None, "dynamic", None, outdir)
-    #clusters = dict()
-    #for label, cluster in clustered_traces:
-    #  clusters[cluster] = clusters.get(cluster, []) + [label]
 
-    #print clusters 
+
+    if vectorizer is None:
+      clustered_traces = ClusterScikit(vectorizer, traces, None, "dynamic", None)
+    else:
+      clustered_traces = ClusterConv(vectorizer, traces, None, "dynamic", None, None)
+    
+    cluster_sampler(clustered_traces,1)
+    #print clusters
