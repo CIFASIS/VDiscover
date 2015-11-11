@@ -106,7 +106,7 @@ def plt_got(path, base):
     #print "got",got
     return plt, got
 
-  cmd = [_OBJDUMP, '-d', path]
+  cmd = ["env", "-i", _OBJDUMP, '-d', path]
   out = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
   got32 = '[^j]*jmp\s+\*0x(\S+)'
   got64 = '[^#]*#\s+(\S+)'
@@ -130,26 +130,28 @@ def plt_got(path, base):
   return plt, got
 
 def load_raw_inss(path):
-  cmd = [_OBJDUMP, '-d', '-j', ".text", path]
+  cmd = ["env", "-i", _OBJDUMP, '-d', '-j', ".text", path]
   raw_instructions = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
   #lines = re.findall('([a-fA-F0-9]+)\s+((<([^@<]+)@plt>)|%s)' % "|".join(inss), raw_instructions)
   #lines = re.findall('$', raw_instructions)
   return raw_instructions
 
 def entrypoint(path):
-    cmd = [_READELF, '-hWS', path]
+    cmd = ["env", "-i", _READELF, '-hWS', path]
     out = subprocess.check_output(cmd)
-
     #elfclass = re.findall('Class:\s*(.*$)', out, re.MULTILINE)[0]
     entrypoint = int(re.findall('Entry point address:\s*(.*$)', out, re.MULTILINE)[0], 16)
+    #print out
+    #print hex(entrypoint)
     if "DYN (Shared object file)" in out:
       entrypoint = entrypoint + 0x80000000
 
     return entrypoint
 
 def no_frame_pointer(path):
-    cmd = [_READELF, '-hWS', path]
+    cmd = ["env", "-i", _READELF, '-hWS', path]
     out = subprocess.check_output(cmd)
+    #print out
 
     #elfclass = re.findall('Class:\s*(.*$)', out, re.MULTILINE)[0]
     out = out.split('.eh_frame         PROGBITS        ')[1]
@@ -177,6 +179,7 @@ class ELF:
   cachedir = "cache"
 
   def __init__(self, path, plt = True, base = 0x0):
+    #print path, plt
     self.path = str(path)
     self.base = base
     self.sections = dict()
@@ -191,6 +194,7 @@ class ELF:
       exit(-1)
 
     self.entrypoint = entrypoint(path)
+    #print hex(self.entrypoint)
     self.no_frame_pointer = no_frame_pointer(path)
     #self._load_sections()
 
