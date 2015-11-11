@@ -68,7 +68,7 @@ if __name__ == "__main__":
       traces = traces_path
     else:
 
-      app = Process(program, envs, timeout, ["libcairo"], [], True)  
+      app = Process(program, envs, timeout, [], [], True)  
       prt = TypePrinter(traces_path, program, 0)
       traces = []
       all_files = []
@@ -101,6 +101,5 @@ if __name__ == "__main__":
       clustered_traces = ClusterScikit(vectorizer, traces, None, "dynamic", None)
     else:
       clustered_traces = ClusterConv(vectorizer, traces, None, "dynamic", None, None)
-    
-    cluster_sampler(clustered_traces,1)
-    #print clusters
+      cluster_sampler(clustered_traces,1)
+      #print clusters

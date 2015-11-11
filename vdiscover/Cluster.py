@@ -26,7 +26,7 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-import pylab as plb
+#import pylab as plb
 
 from Utils import *
 from Pipeline import *
@@ -269,7 +269,7 @@ def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
   model = make_cluster_pipeline_bow(ftype)
   X_red = model.fit_transform(train_dict)
 
-  mpl.rcParams.update({'font.size': 10})
+  #mpl.rcParams.update({'font.size': 10})
   plt.figure()
   colors = 'brgcmykbgrcmykbgrcmykbgrcmyk'
 
