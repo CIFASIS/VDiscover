@@ -48,7 +48,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='')
     parser.add_argument("-i", help="", type=str, default=None, required=True, dest="seeds")
     parser.add_argument("-o", help="", type=str, default=None, required=True, dest="out")
-    parser.add_argument("-v", help="", type=str, default=None, required=False, dest="vectorizer")
+    #parser.add_argument("-v", help="", type=str, default=None, required=False, dest="vectorizer")
     #parser.add_argument("-m", help="", type=str, default="afl", dest="fuzzer")
     parser.add_argument("cmd", help="", type=str, default=None)
 
@@ -97,9 +97,9 @@ if __name__ == "__main__":
         #print traces[-1]
 
 
-    if vectorizer is None:
-      clustered_traces = ClusterScikit(vectorizer, traces, None, "dynamic", None)
-    else:
-      clustered_traces = ClusterConv(vectorizer, traces, None, "dynamic", None, None)
-      cluster_sampler(clustered_traces,1)
-      #print clusters
+    #if vectorizer is None:
+    #  clustered_traces = ClusterScikit(vectorizer, traces, None, "dynamic", None)
+    #else:
+    #  clustered_traces = ClusterConv(vectorizer, traces, None, "dynamic", None, None)
+    #  cluster_sampler(clustered_traces,1)
+    #  #print clusters
