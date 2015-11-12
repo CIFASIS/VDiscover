@@ -19,7 +19,7 @@ VDiscover aims to be used when there is a **large** amount of testcases to analy
 
 ## Quickstart
 
-It is recommended to manually install binutils, scikit-learn
+Before starting, it is recommended to manually install binutils, scikit-learn and setuptools (to perform a local installation). Then we can execute:
 
     git clone https://github.com/CIFASIS/VDiscover.git
     cd VDiscover
