@@ -57,7 +57,7 @@ if __name__ == "__main__":
     outfile = options.out
     #fuzzer = options.fuzzer
     cmd = options.cmd
-    vectorizer = options.vectorizer
+    #vectorizer = options.vectorizer
     program = cmd.split(" ")[0]
     programf = program.replace("/","__")
     timeout = 5

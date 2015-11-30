@@ -57,7 +57,7 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
   #csvreader = load_csv(train_file)
   print "Reading and sampling data to train.."
-  train_programs, train_features, train_classes = read_traces(train_file, nsamples, cut=None)
+  train_programs, train_features, train_classes = read_traces(train_file, nsamples, cut=10, maxsize=window_size)
   train_size = len(train_features)
 
   #y = train_programs
@@ -111,6 +111,34 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
   model = make_cluster_pipeline_subtraces(ftype)
   X_red = model.fit_transform(train_dict)
 
+  colors = 'rbgcmykbgrcmykbgrcmykbgrcmyk'
+  ncolors = len(colors)
+
+  for prog,[x,y] in zip(labels, X_red):
+    x = gauss(0,0.1) + x
+    y = gauss(0,0.1) + y
+    plt.scatter(x, y, c='r')
+    #plt.text(x, y+0.02, prog.split("/")[-1])
+
+
+  if valid_file is not None: 
+    valid_programs, valid_features, valid_classes = read_traces(valid_file, None, cut=10, maxsize=window_size) #None)
+    valid_dict = dict()
+
+    X_valid, _, valid_labels = preprocessor.preprocess_traces(valid_features, y_data=None, labels=valid_programs)
+    valid_dict[ftype] = new_model._predict(X_valid) 
+    X_red = model.transform(valid_dict)
+
+    for prog,[x,y] in zip(valid_labels, X_red):
+      x = gauss(0,0.1) + x
+      y = gauss(0,0.1) + y
+      plt.scatter(x, y, c='b')
+      plt.text(x, y+0.02, prog.split("/")[-1])
+
+  plt.savefig("plot.png")
+  return None
+
+
   from sklearn.cluster import MeanShift, estimate_bandwidth
 
   bandwidth = estimate_bandwidth(X_red, quantile=0.2)
@@ -124,8 +152,6 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
   plt.figure()
   print len(X_red), len(labels)
-  colors = 'rbgcmykbgrcmykbgrcmykbgrcmyk'
-  ncolors = len(colors)
 
   for ([x,y],label, cluster_label) in zip(X_red,labels, cluster_labels):
     x = gauss(0,0.1) + x
@@ -139,8 +165,8 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
   plt.title('Estimated number of clusters: %d' % n_clusters)
 
-  #plb.savefig(outdir+"/plot.png")
-  plt.show()
+  plt.savefig("plot.png")
+  #plt.show()
   
   return zip(labels, cluster_labels)
   #csvwriter = open_csv(train_file+".clusters")
@@ -278,6 +304,19 @@ def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
     y = gauss(0,0.1) + y
     plt.scatter(x, y, c=colors[cl])
     plt.text(x, y+0.02, prog.split("/")[-1])
+
+
+  if valid_file is not None: 
+    valid_programs, valid_features, valid_classes = read_traces(valid_file, None)
+    valid_dict = dict()
+    valid_dict[ftype] = valid_features
+ 
+    X_red = model.transform(valid_dict)
+    for prog,[x,y],cl in zip(valid_programs, X_red, valid_classes):
+      x = gauss(0,0.1) + x
+      y = gauss(0,0.1) + y
+      plt.scatter(x, y, c=colors[cl+1])
+      plt.text(x, y+0.02, prog.split("/")[-1])
 
   plt.show()
   #af = MeanShift().fit(X_red)
