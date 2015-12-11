@@ -29,6 +29,7 @@ sys.setrecursionlimit(1024*1024*1024)
 
 from vdiscover.Pipeline import *
 from vdiscover.Recall  import Recall
+from vdiscover.Cluster import TrainCnn
 from vdiscover.Train  import Train
 
 if __name__ == "__main__":
@@ -52,7 +53,7 @@ if __name__ == "__main__":
     parser.add_argument("--test-aggr",
                         help="Test a model using infile (recall only)",
                         action="store_true", default=False)
- 
+
 
     parser.add_argument("--static",
                         help="Use static features",
@@ -70,7 +71,7 @@ if __name__ == "__main__":
                         help="Cluster input traces using BOW",
                         action="store_true", default=False)
 
-    parser.add_argument("--cluster-conv",
+    parser.add_argument("--cluster-cnn",
                         help="Cluster input traces using a convolutional model",
                         action="store_true", default=False)
 
@@ -78,9 +79,13 @@ if __name__ == "__main__":
                         help="Train a Random Forest using infile",
                         action="store_true", default=False)
 
-    parser.add_argument("--train-lstm",
-                        help="Train a LSTM using infile (warning: very experimental and slow)",
-                        action="store_true", default=False)
+    #parser.add_argument("--train-lstm",
+    #                    help="Train a LSTM using infile (warning: very experimental and slow)",
+    #                    action="store_true", default=False)
+
+    #parser.add_argument("--train-cnn",
+    #                    help="Train a CNN using infile",
+    #                    action="store_true", default=False)
 
     parser.add_argument("--n-samples", type=int,
                         help="Select a number of samples from infile (train only)",
@@ -91,18 +96,20 @@ if __name__ == "__main__":
                         type=str, default="/dev/stdout")
 
     options = parser.parse_args()
-    in_file = options.infile 
+    in_file = options.infile
     valid_file = options.valid
-   
+
     test_simple = options.test
     test_aggr = options.test_aggr
 
     training_mode_rf = options.train_rf
-    training_mode_lstm = options.train_lstm
-    training_mode_cluster_bow = options.cluster_bow
-    training_mode_cluster_conv = options.cluster_conv
+    #training_mode_lstm = options.train_lstm
+    #training_mode_cnn = options.train_cnn
 
-    training_mode = training_mode_rf or training_mode_lstm or training_mode_cluster_bow or training_mode_cluster_conv
+    training_mode_cluster_bow = options.cluster_bow
+    training_mode_cluster_cnn = options.cluster_cnn
+
+    training_mode = training_mode_rf or training_mode_cluster_bow or training_mode_cluster_cnn
 
     probability_mode = options.prob
     nsamples = options.n_samples
@@ -124,21 +131,21 @@ if __name__ == "__main__":
     if training_mode:
       if training_mode_rf:
         Train(out_file, in_file, valid_file, "rf", ftype, nsamples)
-      #elif training_mode_:
-      #  Train(out_file, in_file, valid_file, "lstm", ftype, nsamples)
+      #elif training_mode_cnn:
       elif training_mode_cluster_bow:
         from vdiscover.Cluster  import ClusterScikit
 
         #Cluster(in_file, valid_file, ftype, nsamples)
         ClusterScikit(None, in_file, valid_file, ftype, nsamples)
-      elif training_mode_cluster_conv:
+      elif training_mode_cluster_cnn:
         from vdiscover.Cluster  import ClusterConv
 
         #Cluster(in_file, valid_file, ftype, nsamples)
         if (model_file is None):
-          print "Clustering using a convolutional model requires a pre-trained model"
-          exit(-1)
-        
+          TrainCnn(out_file, in_file, valid_file, ftype, nsamples)
+          #print "Clustering using a convolutional model requires a pre-trained model"
+          exit(0)
+
         ClusterConv(model_file, in_file, valid_file, ftype, nsamples, None)
 
 
@@ -146,7 +153,7 @@ if __name__ == "__main__":
       if model_file is None:
         print "VDiscover requires a pre-trained model to predict"
         exit(-1)
-   
+
       test_mode = None
       if test_simple:
         test_mode = "simple"
