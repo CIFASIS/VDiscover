@@ -29,7 +29,6 @@ sys.setrecursionlimit(1024*1024*1024)
 
 from vdiscover.Pipeline import *
 from vdiscover.Recall  import Recall
-from vdiscover.Cluster import TrainCnn
 from vdiscover.Train  import Train
 
 if __name__ == "__main__":
@@ -138,15 +137,17 @@ if __name__ == "__main__":
         #Cluster(in_file, valid_file, ftype, nsamples)
         ClusterScikit(None, in_file, valid_file, ftype, nsamples)
       elif training_mode_cluster_cnn:
-        from vdiscover.Cluster  import ClusterConv
 
         #Cluster(in_file, valid_file, ftype, nsamples)
         if (model_file is None):
+          from vdiscover.Cluster import TrainCnn
+
           TrainCnn(out_file, in_file, valid_file, ftype, nsamples)
           #print "Clustering using a convolutional model requires a pre-trained model"
           exit(0)
 
-        ClusterConv(model_file, in_file, valid_file, ftype, nsamples, None)
+        from vdiscover.Cluster  import ClusterCnn
+        ClusterCnn(model_file, in_file, valid_file, ftype, nsamples, None)
 
 
     else:

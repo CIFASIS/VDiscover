@@ -64,7 +64,7 @@ def Cluster(X, labels)
   return zip(labels, cluster_labels)
 """
 
-def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
+def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
   f = open(model_file+".pre")
   preprocessor = pickle.load(f)
@@ -84,7 +84,7 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
   maxlen = window_size
 
   embedding_dims = 20
-  nb_filters = 250
+  nb_filters = 50
   filter_length = 3
   hidden_dims = 250
 
@@ -95,7 +95,7 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
   #y = train_programs
   X_train, y_train, labels = preprocessor.preprocess_traces(train_features, y_data=train_classes, labels=train_programs)
-  new_model = mk_cnn("test", max_features, maxlen, embedding_dims, nb_filters, filter_length, hidden_dims, None, weights=layers)
+  new_model = make_cluster_cnn("test", max_features, maxlen, embedding_dims, nb_filters, filter_length, hidden_dims, None, weights=layers)
 
   train_dict = dict()
   train_dict[ftype] = new_model.predict(X_train)
@@ -108,25 +108,22 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
   X_red = X_red_comp[:,0:2]
   X_red_next = X_red_comp[:,2:4]
 
-  colors = mpl.colors.cnames.keys() #'rbgcmykbgrcmykbgrcmykbgrcmyk'
+  colors = mpl.colors.cnames.keys()
   progs = list(set(labels))
   ncolors = len(colors)
 
   for prog,[x,y] in zip(labels, X_red):
-<<<<<<< HEAD
-    #x = gauss(0,0.1) + x
-    #y = gauss(0,0.1) + y
-    color = 'r' #colors[progs.index(prog)]
+    x = gauss(0,0.1) + x
+    y = gauss(0,0.1) + y
+    color = 'r' 
     plt.scatter(x, y, c=color )
-    #plt.text(x, y+0.02, prog.split("/")[-1])
-
 
   if valid_file is not None: 
     valid_programs, valid_features, valid_classes = read_traces(valid_file, None, cut=1, maxsize=window_size) #None)
     valid_dict = dict()
 
     X_valid, _, valid_labels = preprocessor.preprocess_traces(valid_features, y_data=None, labels=valid_programs)
-    valid_dict[ftype] = new_model._predict(X_valid) 
+    valid_dict[ftype] = new_model.predict(X_valid) 
     X_red_valid_comp = model.transform(valid_dict)
 
     X_red_valid = X_red_valid_comp[:,0:2]
@@ -221,15 +218,8 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
     plt.show()
     #plt.savefig('cluster-%d.png' % cluster)
-
-
-  
+ 
   return clustered_traces
-  #csvwriter = open_csv(train_file+".clusters")
-  #for (label, cluster_label) in zip(labels, cluster_labels):
-  #  csvwriter.writerow([label, cluster_label])
-
-  #print "Clusters dumped!"
 
 
 def TrainCnn(model_file, train_file, valid_file, ftype, nsamples):
@@ -265,7 +255,7 @@ def TrainCnn(model_file, train_file, valid_file, ftype, nsamples):
   nb_classes = len(preprocessor.classes)
   print preprocessor.classes
 
-  model = mk_cnn("train", max_features, maxlen, embedding_dims, nb_filters, filter_length, hidden_dims, nb_classes)
+  model = make_cluste_cnn("train", max_features, maxlen, embedding_dims, nb_filters, filter_length, hidden_dims, nb_classes)
   model.fit(X_train, y_train, validation_split=0.1, batch_size=batch_size, nb_epoch=nb_epoch, show_accuracy=True)
 
   model.mypreprocessor = preprocessor
