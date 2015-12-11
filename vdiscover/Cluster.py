@@ -31,6 +31,40 @@ import matplotlib as mpl
 from Utils import *
 from Pipeline import *
 
+"""
+def Cluster(X, labels)
+
+  assert(len(X_red) == len(labels))
+
+  from sklearn.cluster import MeanShift, estimate_bandwidth
+
+  bandwidth = estimate_bandwidth(X, quantile=0.2)
+  print "Clustering with bandwidth:", bandwidth
+
+  af = MeanShift(bandwidth=bandwidth/1).fit(X_red)
+
+  cluster_centers = af.cluster_centers_
+  cluster_labels = af.labels_
+  n_clusters = len(cluster_centers)
+
+  plt.figure()
+  
+  for ([x,y],label, cluster_label) in zip(X_red,labels, cluster_labels):
+    x = gauss(0,0.1) + x
+    y = gauss(0,0.1) + y
+    plt.scatter(x, y, c = colors[cluster_label % ncolors])
+    #plt.text(x-0.05, y+0.01, label.split("/")[-1])
+
+  for i,[x,y] in enumerate(cluster_centers):
+    plt.plot(x, y, 'o', markerfacecolor=colors[i % ncolors],
+             markeredgecolor='k', markersize=7)
+
+  plt.title('Estimated number of clusters: %d' % n_clusters)
+  
+  return zip(labels, cluster_labels)
+"""
+
+
 def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
   f = open(model_file+".pre")
@@ -57,7 +91,7 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
   #csvreader = load_csv(train_file)
   print "Reading and sampling data to train.."
-  train_programs, train_features, train_classes = read_traces(train_file, nsamples, cut=10, maxsize=window_size)
+  train_programs, train_features, train_classes = read_traces(train_file, nsamples, cut=1, maxsize=window_size)
   train_size = len(train_features)
 
   #y = train_programs
@@ -109,40 +143,57 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
   train_dict[ftype] = new_model._predict(X_train)
 
   model = make_cluster_pipeline_subtraces(ftype)
-  X_red = model.fit_transform(train_dict)
+  X_red_comp = model.fit_transform(train_dict)
+  explained_var = np.var(X_red_comp, axis=0)
+  print explained_var
 
-  colors = 'rbgcmykbgrcmykbgrcmykbgrcmyk'
+  X_red = X_red_comp[:,0:2]
+  X_red_next = X_red_comp[:,2:4]
+
+  colors = mpl.colors.cnames.keys() #'rbgcmykbgrcmykbgrcmykbgrcmyk'
+  progs = list(set(labels))
   ncolors = len(colors)
 
   for prog,[x,y] in zip(labels, X_red):
-    x = gauss(0,0.1) + x
-    y = gauss(0,0.1) + y
-    plt.scatter(x, y, c='r')
+    #x = gauss(0,0.1) + x
+    #y = gauss(0,0.1) + y
+    color = 'r' #colors[progs.index(prog)]
+    plt.scatter(x, y, c=color )
     #plt.text(x, y+0.02, prog.split("/")[-1])
 
 
   if valid_file is not None: 
-    valid_programs, valid_features, valid_classes = read_traces(valid_file, None, cut=10, maxsize=window_size) #None)
+    valid_programs, valid_features, valid_classes = read_traces(valid_file, None, cut=1, maxsize=window_size) #None)
     valid_dict = dict()
 
     X_valid, _, valid_labels = preprocessor.preprocess_traces(valid_features, y_data=None, labels=valid_programs)
     valid_dict[ftype] = new_model._predict(X_valid) 
-    X_red = model.transform(valid_dict)
+    X_red_valid_comp = model.transform(valid_dict)
 
-    for prog,[x,y] in zip(valid_labels, X_red):
+    X_red_valid = X_red_valid_comp[:,0:2]
+    X_red_valid_next = X_red_valid_comp[:,2:4]
+
+    for prog,[x,y] in zip(valid_labels, X_red_valid):
       x = gauss(0,0.1) + x
       y = gauss(0,0.1) + y
       plt.scatter(x, y, c='b')
       plt.text(x, y+0.02, prog.split("/")[-1])
 
-  plt.savefig("plot.png")
-  return None
-
+  plt.show()
+  #plt.savefig("plot.png")
+  #return None
 
   from sklearn.cluster import MeanShift, estimate_bandwidth
 
   bandwidth = estimate_bandwidth(X_red, quantile=0.2)
   print "Clustering with bandwidth:", bandwidth
+
+  #X_red = np.vstack((X_red,X_red_valid))
+  #X_red_next = np.vstack((X_red_next,X_red_valid_next))
+  #labels = labels + valid_labels
+
+  print X_red.shape, len(X_red), len(labels)
+  #print valid_labels
 
   af = MeanShift(bandwidth=bandwidth/5).fit(X_red)
 
@@ -151,24 +202,71 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
   n_clusters = len(cluster_centers)
 
   plt.figure()
-  print len(X_red), len(labels)
-
   for ([x,y],label, cluster_label) in zip(X_red,labels, cluster_labels):
     x = gauss(0,0.1) + x
     y = gauss(0,0.1) + y
     plt.scatter(x, y, c = colors[cluster_label % ncolors])
-    plt.text(x-0.05, y+0.01, label.split("/")[-1])
+    #print label
+    #if label in valid_labels:
+    #  plt.text(x-0.05, y+0.01, label.split("/")[-1])
 
   for i,[x,y] in enumerate(cluster_centers):
     plt.plot(x, y, 'o', markerfacecolor=colors[i % ncolors],
              markeredgecolor='k', markersize=7)
 
+  #for prog,[x,y] in zip(valid_labels, X_red_valid):
+    #x = gauss(0,0.1) + x
+    #y = gauss(0,0.1) + y
+    #plt.scatter(x, y, c='black')
+    #plt.text(x, y+0.02, prog.split("/")[-1])
+
+
   plt.title('Estimated number of clusters: %d' % n_clusters)
 
-  plt.savefig("plot.png")
-  #plt.show()
+  #plt.savefig("clusters.png")
+  plt.show()
+  clustered_traces = zip(labels, cluster_labels)
+
+  clusters = dict()
+  for label, cluster in clustered_traces:
+    clusters[cluster] = clusters.get(cluster, []) + [label]
+
+  for cluster, traces in clusters.items():
+    plt.figure()
+    plt.title('Cluster %d' % cluster)
+    #X_clus = []
+   
+    #for prog in traces:
+    #  i = labels.index(prog)
+    #  X_clus.append(X_train[i])
+
+    #train_dict = dict()
+    #train_dict[ftype] = X_clus
+
+    #model = make_cluster_pipeline_subtraces(ftype)
+    #X_red = model.fit_transform(train_dict)
+
+    #for [x,y],prog in zip(X_red,traces):
+    for prog in traces:
+
+      i = labels.index(prog)
+      assert(i>=0)
+      [x,y] = X_red_next[i]
+      x = gauss(0,0.1) + x
+      y = gauss(0,0.1) + y
+      plt.scatter(x, y, c='r')
+
+      #if prog in valid_labels:
+      plt.text(x-0.05, y+0.01, prog.split("/")[-1])
+
+      #plt.text(x, y+0.02, prog.split("/")[-1])
+
+    plt.show()
+    #plt.savefig('cluster-%d.png' % cluster)
+
+
   
-  return zip(labels, cluster_labels)
+  return clustered_traces
   #csvwriter = open_csv(train_file+".clusters")
   #for (label, cluster_label) in zip(labels, cluster_labels):
   #  csvwriter.writerow([label, cluster_label])

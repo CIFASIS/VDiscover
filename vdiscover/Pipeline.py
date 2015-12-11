@@ -135,7 +135,7 @@ def make_cluster_pipeline_subtraces(ftype):
     return Pipeline(steps=[
          ('selector', ItemSelector(key='dynamic')),
          #('todense', DenseTransformer()),
-         ('reducer', PCA(n_components=2)),
+         ('reducer', PCA(n_components=12)),
     ])
   elif ftype is "static":
     raise NotImplemented
