@@ -142,6 +142,79 @@ def make_cluster_pipeline_subtraces(ftype):
   else:
     assert(0)
 
+def make_cluster_cnn(mode, max_features, maxlen, embedding_dims, nb_filters, filter_length, hidden_dims, nb_classes, weights=None):
+
+  #print mode, max_features, maxlen, embedding_dims, nb_filters, filter_length, hidden_dims, nb_classes
+  from keras.preprocessing import sequence
+  from keras.optimizers import RMSprop
+  from keras.models import Sequential
+  from keras.layers.core import Dense, Dropout, Activation, Flatten
+  from keras.layers.embeddings import Embedding
+  from keras.layers.convolutional import Convolution1D, MaxPooling1D
+
+  print('Build model...')
+  model = Sequential()
+
+  # we start off with an efficient embedding layer which maps
+  # our vocab indices into embedding_dims dimensions
+  if mode == "train":
+    model.add(Embedding(max_features, embedding_dims, input_length=maxlen))
+  elif mode == "test":
+    model.add(Embedding(max_features, embedding_dims, input_length=maxlen, weights=weights[0]))
+
+  model.add(Dropout(0.25))
+
+  # we add a Convolution1D, which will learn nb_filters
+  # word group filters of size filter_length:
+  if mode == "train":
+    model.add(Convolution1D(nb_filter=nb_filters,
+                        filter_length=filter_length,
+                        border_mode='valid',
+                        activation='relu',
+                        subsample_length=1))
+
+  elif mode == "test":
+    model.add(Convolution1D(nb_filter=nb_filters,
+                        filter_length=filter_length,
+                        border_mode='valid',
+                        activation='relu',
+                        subsample_length=1,
+                        weights=weights[2]))
+
+
+  # we use standard max pooling (halving the output of the previous layer):
+  model.add(MaxPooling1D(pool_length=2))
+
+  # We flatten the output of the conv layer, so that we can add a vanilla dense layer:
+  model.add(Flatten())
+
+  # Computing the output shape of a conv layer can be tricky;
+  # for a good tutorial, see: http://cs231n.github.io/convolutional-networks/
+  output_size = nb_filters * (((maxlen - filter_length) / 1) + 1) / 2
+  #print output_size, hidden_dims
+
+  # We add a vanilla hidden layer:
+  if mode == "train":
+    model.add(Dense(hidden_dims))
+  if mode == "test":
+    model.add(Dense(hidden_dims, weights=weights[5]))
+
+  if mode == "train":
+
+    model.add(Dropout(0.25))
+    model.add(Activation('relu'))
+
+    # We project onto a single unit output layer, and squash it with a sigmoid:
+    model.add(Dense(nb_classes))
+
+    model.add(Activation('softmax'))
+    model.compile(loss='categorical_crossentropy', optimizer='rmsprop', class_mode="categorical")
+
+  elif mode == "test":
+    model.compile(loss='mean_squared_error', optimizer='rmsprop')
+
+
+  return model
 
 
 

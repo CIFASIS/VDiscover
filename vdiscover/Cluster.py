@@ -64,7 +64,6 @@ def Cluster(X, labels)
   return zip(labels, cluster_labels)
 """
 
-
 def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
   f = open(model_file+".pre")
@@ -85,7 +84,7 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
   maxlen = window_size
 
   embedding_dims = 20
-  nb_filters = 50
+  nb_filters = 250
   filter_length = 3
   hidden_dims = 250
 
@@ -96,51 +95,10 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
   #y = train_programs
   X_train, y_train, labels = preprocessor.preprocess_traces(train_features, y_data=train_classes, labels=train_programs)
-
-  from keras.preprocessing import sequence
-  from keras.optimizers import RMSprop
-  from keras.models import Sequential
-  from keras.layers.core import Dense, Dropout, Activation, Flatten
-  from keras.layers.embeddings import Embedding
-  from keras.layers.convolutional import Convolution1D, MaxPooling1D
-
-  print('Build model...')
-  new_model = Sequential()
-
-  # we start off with an efficient embedding layer which maps
-  # our vocab indices into embedding_dims dimensions
-  new_model.add(Embedding(max_features, embedding_dims, weights=layers[0]))
-  new_model.add(Dropout(0.25))
-
-  # we add a Convolution1D, which will learn nb_filters
-  # word group filters of size filter_length:
-  new_model.add(Convolution1D(input_dim=embedding_dims,
-                        nb_filter=nb_filters,
-                        filter_length=filter_length,
-                        border_mode="valid",
-                        activation="relu",
-                        subsample_length=1,
-                        weights=layers[2]))
-
-  # we use standard max pooling (halving the output of the previous layer):
-  new_model.add(MaxPooling1D(pool_length=2))
-
-  # We flatten the output of the conv layer, so that we can add a vanilla dense layer:
-  new_model.add(Flatten())
-
-  # Computing the output shape of a conv layer can be tricky;
-  # for a good tutorial, see: http://cs231n.github.io/convolutional-networks/
-  output_size = nb_filters * (((maxlen - filter_length) / 1) + 1) / 2
-
-  # We add a vanilla hidden layer:
-  new_model.add(Dense(output_size, hidden_dims, weights=layers[5]))
-  #new_model.add(Dropout(0.25))
-  #new_model.add(Activation('relu'))
-
-  new_model.compile(loss='mean_squared_error', optimizer='rmsprop')
+  new_model = mk_cnn("test", max_features, maxlen, embedding_dims, nb_filters, filter_length, hidden_dims, None, weights=layers)
 
   train_dict = dict()
-  train_dict[ftype] = new_model._predict(X_train)
+  train_dict[ftype] = new_model.predict(X_train)
 
   model = make_cluster_pipeline_subtraces(ftype)
   X_red_comp = model.fit_transform(train_dict)
@@ -155,6 +113,7 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
   ncolors = len(colors)
 
   for prog,[x,y] in zip(labels, X_red):
+<<<<<<< HEAD
     #x = gauss(0,0.1) + x
     #y = gauss(0,0.1) + y
     color = 'r' #colors[progs.index(prog)]
@@ -181,7 +140,6 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
   plt.show()
   #plt.savefig("plot.png")
-  #return None
 
   from sklearn.cluster import MeanShift, estimate_bandwidth
 
@@ -274,7 +232,7 @@ def ClusterConv(model_file, train_file, valid_file, ftype, nsamples, outdir):
   #print "Clusters dumped!"
 
 
-def TrainDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
+def TrainCnn(model_file, train_file, valid_file, ftype, nsamples):
 
   csvreader = open_csv(train_file)
 
@@ -290,7 +248,7 @@ def TrainDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
   nb_filters = 250
   filter_length = 3
   hidden_dims = 250
-  nb_epoch = 1
+  nb_epoch = 100
 
   train_programs, train_features, train_classes = read_traces(train_file, nsamples, cut=None)
   train_size = len(train_features)
@@ -303,70 +261,22 @@ def TrainDeepRepr(model_file, train_file, valid_file, ftype, nsamples):
   max_features = len(tokenizer.word_counts)
 
   preprocessor = DeepReprPreprocessor(tokenizer, window_size, batch_size)
-  X_train,y_train = preprocessor.preprocess(train_features, 3000)
+  X_train,y_train = preprocessor.preprocess(train_features, 50000)
   nb_classes = len(preprocessor.classes)
   print preprocessor.classes
-  #print X_train[0], len(X_train[0])
-  #print X_train[1], len(X_train[1])
 
-  #print set(y_train)
-  #assert(0)
-
-  from keras.preprocessing import sequence
-  from keras.optimizers import RMSprop
-  from keras.models import Sequential
-  from keras.layers.core import Dense, Dropout, Activation, Flatten
-  from keras.layers.embeddings import Embedding
-  from keras.layers.convolutional import Convolution1D, MaxPooling1D
-
-  print('Build model...')
-  model = Sequential()
-
-  # we start off with an efficient embedding layer which maps
-  # our vocab indices into embedding_dims dimensions
-  model.add(Embedding(max_features, embedding_dims))
-  model.add(Dropout(0.25))
-
-  # we add a Convolution1D, which will learn nb_filters
-  # word group filters of size filter_length:
-  model.add(Convolution1D(input_dim=embedding_dims,
-                        nb_filter=nb_filters,
-                        filter_length=filter_length,
-                        border_mode="valid",
-                        activation="relu",
-                        subsample_length=1))
-
-  # we use standard max pooling (halving the output of the previous layer):
-  model.add(MaxPooling1D(pool_length=2))
-
-  # We flatten the output of the conv layer, so that we can add a vanilla dense layer:
-  model.add(Flatten())
-
-  # Computing the output shape of a conv layer can be tricky;
-  # for a good tutorial, see: http://cs231n.github.io/convolutional-networks/
-  output_size = nb_filters * (((maxlen - filter_length) / 1) + 1) / 2
-
-  # We add a vanilla hidden layer:
-  model.add(Dense(output_size, hidden_dims))
-  model.add(Dropout(0.25))
-  model.add(Activation('relu'))
-
-  # We project onto a single unit output layer, and squash it with a sigmoid:
-  model.add(Dense(hidden_dims, nb_classes))
-  model.add(Activation('softmax'))
-
-  model.compile(loss='categorical_crossentropy', optimizer='rmsprop', class_mode="categorical")
+  model = mk_cnn("train", max_features, maxlen, embedding_dims, nb_filters, filter_length, hidden_dims, nb_classes)
   model.fit(X_train, y_train, validation_split=0.1, batch_size=batch_size, nb_epoch=nb_epoch, show_accuracy=True)
 
   model.mypreprocessor = preprocessor
-  model_file = "cluster-weights.hdf5"
+  #model_file = model_file + ".wei"
   #modelfile = open_model(model_file)
-  print "Saving model to",model_file
-  model.save_weights(model_file)
+  print "Saving model to",model_file + ".wei"
+  model.save_weights(model_file + ".wei")
 
-  model_file = "cluster-preprocessor.pklz"
-  modelfile = open_model(model_file)
-  print "Saving preprocessor to",model_file
+  #model_file = model_file + ".pre"
+  modelfile = open_model(model_file + ".pre")
+  print "Saving preprocessor to",model_file + ".pre"
   #model.save_weights(model_file)
   modelfile.write(pickle.dumps(preprocessor, protocol=2))
 
@@ -404,11 +314,11 @@ def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
     plt.text(x, y+0.02, prog.split("/")[-1])
 
 
-  if valid_file is not None: 
+  if valid_file is not None:
     valid_programs, valid_features, valid_classes = read_traces(valid_file, None)
     valid_dict = dict()
     valid_dict[ftype] = valid_features
- 
+
     X_red = model.transform(valid_dict)
     for prog,[x,y],cl in zip(valid_programs, X_red, valid_classes):
       x = gauss(0,0.1) + x
