@@ -26,14 +26,13 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-#import pylab as plb
 
 from Utils import *
 from Pipeline import *
 
-"""
-def Cluster(X, labels)
 
+#def Cluster(X, labels)
+"""
   assert(len(X_red) == len(labels))
 
   from sklearn.cluster import MeanShift, estimate_bandwidth
@@ -48,7 +47,7 @@ def Cluster(X, labels)
   n_clusters = len(cluster_centers)
 
   plt.figure()
-  
+
   for ([x,y],label, cluster_label) in zip(X_red,labels, cluster_labels):
     x = gauss(0,0.1) + x
     y = gauss(0,0.1) + y
@@ -60,9 +59,20 @@ def Cluster(X, labels)
              markeredgecolor='k', markersize=7)
 
   plt.title('Estimated number of clusters: %d' % n_clusters)
-  
-  return zip(labels, cluster_labels)
 """
+#return zip(labels, cluster_labels)
+
+
+
+batch_size = 25
+window_size = 32
+maxlen = window_size
+
+embedding_dims = 5
+nb_filters = 50
+filter_length = 3
+hidden_dims = 50
+nb_epoch = 3
 
 def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
@@ -79,18 +89,8 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
   max_features = len(preprocessor.tokenizer.word_counts)
 
-  batch_size = 100
-  window_size = 300
-  maxlen = window_size
-
-  embedding_dims = 20
-  nb_filters = 50
-  filter_length = 3
-  hidden_dims = 250
-
-  #csvreader = load_csv(train_file)
   print "Reading and sampling data to train.."
-  train_programs, train_features, train_classes = read_traces(train_file, nsamples, cut=1, maxsize=window_size)
+  train_programs, train_features, train_classes = read_traces(train_file, nsamples, cut=None)
   train_size = len(train_features)
 
   #y = train_programs
@@ -113,25 +113,25 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
   ncolors = len(colors)
 
   for prog,[x,y] in zip(labels, X_red):
-    x = gauss(0,0.1) + x
-    y = gauss(0,0.1) + y
-    color = 'r' 
+    x = gauss(0,0.05) + x
+    y = gauss(0,0.05) + y
+    color = 'r'
     plt.scatter(x, y, c=color )
 
-  if valid_file is not None: 
-    valid_programs, valid_features, valid_classes = read_traces(valid_file, None, cut=1, maxsize=window_size) #None)
+  if valid_file is not None:
+    valid_programs, valid_features, valid_classes = read_traces(valid_file, None, cut=None, maxsize=window_size) #None)
     valid_dict = dict()
 
     X_valid, _, valid_labels = preprocessor.preprocess_traces(valid_features, y_data=None, labels=valid_programs)
-    valid_dict[ftype] = new_model.predict(X_valid) 
+    valid_dict[ftype] = new_model.predict(X_valid)
     X_red_valid_comp = model.transform(valid_dict)
 
     X_red_valid = X_red_valid_comp[:,0:2]
     X_red_valid_next = X_red_valid_comp[:,2:4]
 
     for prog,[x,y] in zip(valid_labels, X_red_valid):
-      x = gauss(0,0.1) + x
-      y = gauss(0,0.1) + y
+      x = gauss(0,0.05) + x
+      y = gauss(0,0.05) + y
       plt.scatter(x, y, c='b')
       plt.text(x, y+0.02, prog.split("/")[-1])
 
@@ -158,8 +158,8 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
   plt.figure()
   for ([x,y],label, cluster_label) in zip(X_red,labels, cluster_labels):
-    x = gauss(0,0.1) + x
-    y = gauss(0,0.1) + y
+    #x = gauss(0,0.1) + x
+    #y = gauss(0,0.1) + y
     plt.scatter(x, y, c = colors[cluster_label % ncolors])
     #print label
     #if label in valid_labels:
@@ -181,6 +181,11 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
   #plt.savefig("clusters.png")
   plt.show()
   clustered_traces = zip(labels, cluster_labels)
+  writer = open_csv(train_file.replace(".gz","")+".clusters")
+  for label, cluster in clustered_traces:
+     writer.writerow([label, cluster])
+
+  """
 
   clusters = dict()
   for label, cluster in clustered_traces:
@@ -190,7 +195,7 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
     plt.figure()
     plt.title('Cluster %d' % cluster)
     #X_clus = []
-   
+
     #for prog in traces:
     #  i = labels.index(prog)
     #  X_clus.append(X_train[i])
@@ -218,8 +223,9 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
     plt.show()
     #plt.savefig('cluster-%d.png' % cluster)
- 
-  return clustered_traces
+  """
+
+  #return clustered_traces
 
 
 def TrainCnn(model_file, train_file, valid_file, ftype, nsamples):
@@ -229,16 +235,6 @@ def TrainCnn(model_file, train_file, valid_file, ftype, nsamples):
   train_features = []
   train_programs = []
   train_classes = []
-
-  batch_size = 100
-  window_size = 300
-  maxlen = window_size
-
-  embedding_dims = 20
-  nb_filters = 250
-  filter_length = 3
-  hidden_dims = 250
-  nb_epoch = 100
 
   train_programs, train_features, train_classes = read_traces(train_file, nsamples, cut=None)
   train_size = len(train_features)
@@ -251,11 +247,11 @@ def TrainCnn(model_file, train_file, valid_file, ftype, nsamples):
   max_features = len(tokenizer.word_counts)
 
   preprocessor = DeepReprPreprocessor(tokenizer, window_size, batch_size)
-  X_train,y_train = preprocessor.preprocess(train_features, 50000)
+  X_train,y_train = preprocessor.preprocess(train_features, 10000)
   nb_classes = len(preprocessor.classes)
   print preprocessor.classes
 
-  model = make_cluste_cnn("train", max_features, maxlen, embedding_dims, nb_filters, filter_length, hidden_dims, nb_classes)
+  model = make_cluster_cnn("train", max_features, maxlen, embedding_dims, nb_filters, filter_length, hidden_dims, nb_classes)
   model.fit(X_train, y_train, validation_split=0.1, batch_size=batch_size, nb_epoch=nb_epoch, show_accuracy=True)
 
   model.mypreprocessor = preprocessor

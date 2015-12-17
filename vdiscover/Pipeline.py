@@ -236,6 +236,7 @@ class DeepReprPreprocessor:
     cut_X_data = []
     cut_label_data = []
     cut_y_data = []
+    rep = 5
 
     X_size = len(X_data)
 
@@ -247,21 +248,27 @@ class DeepReprPreprocessor:
       trace = raw_trace.split(" ")
 
       size = len(trace)
+      rep = 1 + int(float(size) / float(self.max_len))
 
-      start = size - (self.max_len)
-      start = randint(0, max(start,0))
-      new_trace = " ".join(trace[start:(start+size)])
-      cut_X_data.append(new_trace)
+      for _ in range(rep):
 
-      if labels is not None:
-        cut_label_data.append(labels[i])
-      else:
-        cut_label_data.append("+"+str(size))
+        start = size - (self.max_len)
+        start = randint(0, max(start,0))
 
-      if y_data is not None:
-        cut_y_data.append(y_data[i])
-      else:
-        cut_y_data.append(0)
+        new_trace = " ".join(trace[start:(start+self.max_len)])
+        #print "sizes:", size, len(trace[start:(start+self.max_len)])
+
+        cut_X_data.append(new_trace)
+
+        if labels is not None:
+          cut_label_data.append(labels[i])
+        else:
+          cut_label_data.append("+"+str(size))
+
+        if y_data is not None:
+          cut_y_data.append(y_data[i])
+        else:
+          cut_y_data.append(0)
 
     X_train = self.tokenizer.texts_to_sequences(cut_X_data)
     labels = cut_label_data
@@ -290,19 +297,33 @@ class DeepReprPreprocessor:
 
       size = len(trace)
 
-      start = randint(0, size-2)
-      end = randint(start, size-2)
+      if size <= (self.max_len + 1):
+          start = 0
+          end = size - 2
+          new_trace = " ".join(trace[start:(end+1)])
+          last_event = trace[(end+1)].split(":")
+          cut_y_data.append(last_event[0])
+      else:
+          #print size
+          start = size - (self.max_len) - 2
+          start = randint(0, start)
+          end = start + self.max_len
+          #print len(trace[start:end])
+          #new_trace = " ".join(trace[start:end])
 
-      new_trace = " ".join(trace[start:(end+1)])
-      last_event = trace[end+1].split(":")
-      cut_y_data.append(last_event[0])
+          #start = randint(0, size-2)
+          #end = randint(start, size-2)
+
+          new_trace = " ".join(trace[start:(end+1)])
+          last_event = trace[end+1].split(":")
+          cut_y_data.append(last_event[0])
 
 
     for y in set(cut_y_data):
       stats[y] = float(cut_y_data.count(y)) / len(cut_y_data)
 
-    #print stats, sum(stats.values())
-
+    print stats, sum(stats.values())
+    #assert(0)
     cut_y_data = []
     for _ in xrange(cut_size):
 
@@ -310,39 +331,39 @@ class DeepReprPreprocessor:
 
       raw_trace = X_data[i][:-1]
       trace = raw_trace.split(" ")
-
       size = len(trace)
 
-      start = randint(0, size-4)
-      end = randint(start, size-4)#start + randint(0, self.max_len)
 
-      new_trace = " ".join(trace[start:(end+1)])
-      last_event = trace[end+3].split(":")
+      if size <= (self.max_len + 1):
+          start = 0
+          end = size - 2
+          new_trace = " ".join(trace[start:(end+1)])
+          last_event = trace[(end+1)].split(":")
+      else:
+          #print size
+          start = size - (self.max_len) - 2
+          start = randint(0, start)
+          end = start + self.max_len
+          #print len(trace[start:end])
+          #new_trace = " ".join(trace[start:end])
+
+          #start = randint(0, size-2)
+          #end = randint(start, size-2)
+
+          new_trace = " ".join(trace[start:(end+1)])
+          last_event = trace[end+1].split(":")
+
       cl = last_event[0]
-
-      #print raw_trace
-      #print start,end
-      #print new_trace
-      #print cl
-      #assert(0)
-
-      #if len(last_event) > 1:
-      #  print cl, last_event[1]
-      if cl in stats:
-        if random() <= stats[cl]:
-          continue
-
-
-      cut_X_data.append(new_trace)
 
       if cl not in self.classes:
         self.classes.append(cl)
+        stats[cl] = 0.0
+      else:
+        if random() <= stats[cl]:
+          continue
 
+      cut_X_data.append(new_trace)
       cut_y_data.append(self.classes.index(cl))
-
-      #if y_data is not None:
-      #  y = y_data[i]
-      #  cut_y_data.append(y)
 
     X_train = self.tokenizer.texts_to_sequences(cut_X_data)
 
