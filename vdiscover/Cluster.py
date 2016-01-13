@@ -24,8 +24,11 @@ import csv
 import subprocess
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib as mpl
+
+# hack from https://stackoverflow.com/questions/2801882/generating-a-png-with-matplotlib-when-display-is-undefined to avoid using X
+mpl.use('Agg')
+import matplotlib.pyplot as plt
 
 from Utils import *
 from Pipeline import *
@@ -111,13 +114,17 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
   colors = mpl.colors.cnames.keys()
   progs = list(set(labels))
   ncolors = len(colors)
-
+  size = len(labels)
+  print "Plotting.."
+ 
   for prog,[x,y] in zip(labels, X_red):
+  #for prog,[x,y] in sample(zip(labels, X_red), min(size, 1000)):
     x = gauss(0,0.05) + x
     y = gauss(0,0.05) + y
     color = 'r'
     plt.scatter(x, y, c=color )
 
+  """
   if valid_file is not None:
     valid_programs, valid_features, valid_classes = read_traces(valid_file, None, cut=None, maxsize=window_size) #None)
     valid_dict = dict()
@@ -134,13 +141,16 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
       y = gauss(0,0.05) + y
       plt.scatter(x, y, c='b')
       plt.text(x, y+0.02, prog.split("/")[-1])
-
+  
   plt.show()
-  #plt.savefig("plot.png")
-
+  """
+  plt.savefig(train_file.replace(".gz","")+".png")
+  print "Bandwidth estimation.."
   from sklearn.cluster import MeanShift, estimate_bandwidth
 
-  bandwidth = estimate_bandwidth(X_red, quantile=0.2)
+
+  X_red_sample = X_red[:min(size, 1000)]
+  bandwidth = estimate_bandwidth(X_red_sample, quantile=0.2)
   print "Clustering with bandwidth:", bandwidth
 
   #X_red = np.vstack((X_red,X_red_valid))
@@ -150,16 +160,17 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
   print X_red.shape, len(X_red), len(labels)
   #print valid_labels
 
-  af = MeanShift(bandwidth=bandwidth/5).fit(X_red)
+  af = MeanShift(bandwidth=bandwidth/1).fit(X_red)
 
   cluster_centers = af.cluster_centers_
   cluster_labels = af.labels_
   n_clusters = len(cluster_centers)
-
+  
   plt.figure()
   for ([x,y],label, cluster_label) in zip(X_red,labels, cluster_labels):
-    #x = gauss(0,0.1) + x
-    #y = gauss(0,0.1) + y
+  #for ([x,y],label, cluster_label) in sample(zip(X_red,labels, cluster_labels), min(size, 1000)):
+    x = gauss(0,0.1) + x
+    y = gauss(0,0.1) + y
     plt.scatter(x, y, c = colors[cluster_label % ncolors])
     #print label
     #if label in valid_labels:
@@ -169,6 +180,7 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
     plt.plot(x, y, 'o', markerfacecolor=colors[i % ncolors],
              markeredgecolor='k', markersize=7)
 
+  """
   #for prog,[x,y] in zip(valid_labels, X_red_valid):
     #x = gauss(0,0.1) + x
     #y = gauss(0,0.1) + y
@@ -180,6 +192,9 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
   #plt.savefig("clusters.png")
   plt.show()
+  """
+  plt.savefig(train_file.replace(".gz","")+".clusters.png")
+
   clustered_traces = zip(labels, cluster_labels)
   writer = open_csv(train_file.replace(".gz","")+".clusters")
   for label, cluster in clustered_traces:

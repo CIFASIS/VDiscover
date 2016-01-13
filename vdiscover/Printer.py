@@ -91,7 +91,7 @@ class TypePrinter:
     trace = ""
 
     for x,y in events:
-      trace = trace+x+"="+y+" "
+      trace = trace + ("%s=%s " % (x,y))
 
     row = [self.pname+":"+label,trace]
 

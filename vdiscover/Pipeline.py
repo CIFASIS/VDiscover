@@ -236,7 +236,7 @@ class DeepReprPreprocessor:
     cut_X_data = []
     cut_label_data = []
     cut_y_data = []
-    rep = 5
+    #rep = 5
 
     X_size = len(X_data)
 
@@ -249,6 +249,7 @@ class DeepReprPreprocessor:
 
       size = len(trace)
       rep = 1 + int(float(size) / float(self.max_len))
+      rep = min(rep, 10)
 
       for _ in range(rep):
 

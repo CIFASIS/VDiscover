@@ -28,8 +28,14 @@ def cluster_sampler(clustered_traces, n_per_cluster):
     clusters[cluster] = clusters.get(cluster, []) + [label.split(":")[-1]]
 
   selected = set()
+  tmp = set()
+
   for (cluster, seeds) in clusters.items():
     n_sample = min(len(seeds), n_per_cluster)
-    selected.update(set(random.sample(seeds, n_sample)))
+    tmp = set(seeds).intersection(selected)
+    if len(tmp) >= n_sample: 
+      selected.update(set(random.sample(tmp, n_sample)))
+    else:
+      selected.update(set(random.sample(seeds, n_sample)))
 
   return selected

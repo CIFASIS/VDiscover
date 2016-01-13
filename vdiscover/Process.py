@@ -45,7 +45,7 @@ from MemoryMap import MemoryMaps
 from Alarm import alarm_handler, TimeoutEx
 
 class Process(Application):
-    def __init__(self, program, envs, timeout, included_mods = [], ignored_mods = [], no_stdout = True):
+    def __init__(self, program, envs, timeout, included_mods = [], ignored_mods = [], no_stdout = True, max_events = 10000):
 
         Application.__init__(self)  # no effect
 
@@ -63,7 +63,7 @@ class Process(Application):
         self.pid = None
         self.mm = None
         self.timeouts = 0
-        self.max_timeouts = 10
+        self.max_events = max_events
 
         # Parse ELF
         self.elf = ELF(self.program, plt = False)
@@ -77,6 +77,7 @@ class Process(Application):
         self.last_signal = {}
         self.last_call = None
         self.crashed = False
+        self.nevents = 0
         self.events = []
 
         self.binfo = dict()
@@ -146,7 +147,7 @@ class Process(Application):
 
                 else:
                   call = Call(name, module)
-                  self.mm.update()
+                  #self.mm.update()
                   #print "updated mm"
                   call.detect_parameters(self.process, self.mm)
                   breakpoint.desinstall(set_ip=True)
@@ -259,9 +260,11 @@ class Process(Application):
         signal = self.debugger.waitSignals()
         process = signal.process
         events = self.createEvents(signal)
-        vulns = self.DetectVulnerabilities(self.events, events)
+        
+        #vulns = self.DetectVulnerabilities(self.events, events)
         #print "vulns detected"
-        self.events = self.events + events + vulns
+        self.events = self.events + events #+ vulns
+        self.nevents = self.nevents + len(events)
 
 
     def readInstrSize(self, address, default_size=None):
@@ -328,11 +331,18 @@ class Process(Application):
 
         # Set the breakpoints
         self.breakpoint(self.elf.GetEntrypoint())
+        #print hex(self.elf.GetEntrypoint())
 
         try:
           while True:
+
             #self.cont() 
-            if not self.debugger or self.crashed:
+            if self.nevents > self.max_events:
+
+                self.events.append(Timeout(timeout))
+                alarm(0)
+                return
+            elif not self.debugger or self.crashed:
                 # There is no more process: quit
                 alarm(0)
                 return
@@ -371,6 +381,7 @@ class Process(Application):
 
     def getData(self, inputs):
         self.events = []
+        self.nevents = 0
         self.debugger = PtraceDebugger()
 
         self.runProcess([self.program]+inputs)
@@ -389,7 +400,3 @@ class Process(Application):
 
         self.process = None
         return self.events
-
-
-    def timeouted(self):
-        return self.timeouts >= self.max_timeouts

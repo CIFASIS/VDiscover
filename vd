@@ -32,7 +32,7 @@ sys.setrecursionlimit(1024*1024*1024)
 #from vdiscover.Detection import WriteTestcase
 from vdiscover.Process    import Process
 from vdiscover.Printer    import TypePrinter
-from vdiscover.Cluster  import ClusterScikit, ClusterConv
+#from vdiscover.Cluster  import ClusterScikit, ClusterConv
 from vdiscover.Utils import update_progress
 from vdiscover.Sampling import cluster_sampler 
 
@@ -60,7 +60,9 @@ if __name__ == "__main__":
     #vectorizer = options.vectorizer
     program = cmd.split(" ")[0]
     programf = program.replace("/","__")
-    timeout = 5
+    main_module = program.split("/")[-1]
+
+    timeout = 15
     envs = dict()
     traces_path = outfile#outdir+"/traces.raw"
 
@@ -68,7 +70,16 @@ if __name__ == "__main__":
       traces = traces_path
     else:
 
-      app = Process(program, envs, timeout, [], [], True)  
+      #app = Process(program, envs, timeout, ["libpixman-1.so","libcairo.so.2","libpango"], [], True)  
+      modules_to_trace = [main_module]
+      if "LD_LIBRARY_PATH" in os.environ:
+        libs =  os.environ["LD_LIBRARY_PATH"]
+        for _,_,files in os.walk(libs):
+          for f in files:
+            modules_to_trace.append(f)
+        
+      print "Tracing", modules_to_trace
+      app = Process(program, envs, timeout, modules_to_trace, [], True)  
       prt = TypePrinter(traces_path, program, 0)
       traces = []
       all_files = []
@@ -85,13 +96,15 @@ if __name__ == "__main__":
 
       for progress,testcase in enumerate(all_files):
         #print testcase
-        progress = round(float(progress)/nfiles, 2)
+        progress = round(float(progress)/nfiles,4)
         update_progress(progress)
         prepared_cmd = cmd.replace(program,"")
         prepared_cmd = prepared_cmd.split("@@")
         prepared_cmd = prepared_cmd[0].split(" ") + [testcase] + prepared_cmd[1].split(" ")
         prepared_cmd = filter(lambda x: x<>'', prepared_cmd)
+        #print "Getting data.."
         events = app.getData(prepared_cmd)
+        #print "Printing data.. ", len(events)
         traces.append(prt.print_events(testcase,events))
         #print prepared_cmd
         #print traces[-1]
