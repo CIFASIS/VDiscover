@@ -77,7 +77,7 @@ class Process(Application):
         self.last_signal = {}
         self.last_call = None
         self.crashed = False
-        self.nevents = 0
+        self.nevents = dict()
         self.events = []
 
         self.binfo = dict()
@@ -125,6 +125,7 @@ class Process(Application):
                   for (range, mod, atts) in self.mm.items():
                      if '/' in mod and 'x' in atts and not ("libc-" in mod):
 
+                        # FIXME: self.elf.path should be absolute
                         if mod == self.elf.path:
                            base = 0
                         else:
@@ -155,7 +156,15 @@ class Process(Application):
                   call_ip = ip
                   self.process.singleStep()
                   self.debugger.waitProcessEvent()
-                  self.breakpoint(call_ip)
+
+                  n = self.nevents.get(name, 0)
+                  self.nevents[name] = n + 1
+
+                  if n < self.max_events:
+                    self.breakpoint(call_ip)
+                  #else:
+                    #print "disabled!"
+ 
                   #print "call detected!"
                   return [call]
 
@@ -264,7 +273,7 @@ class Process(Application):
         #vulns = self.DetectVulnerabilities(self.events, events)
         #print "vulns detected"
         self.events = self.events + events #+ vulns
-        self.nevents = self.nevents + len(events)
+        #self.nevents = self.nevents + len(events)
 
 
     def readInstrSize(self, address, default_size=None):
@@ -337,12 +346,12 @@ class Process(Application):
           while True:
 
             #self.cont() 
-            if self.nevents > self.max_events:
-
-                self.events.append(Timeout(timeout))
-                alarm(0)
-                return
-            elif not self.debugger or self.crashed:
+            #if self.nevents > self.max_events:
+            #
+            #    self.events.append(Timeout(timeout))
+            #    alarm(0)
+            #    return
+            if not self.debugger or self.crashed:
                 # There is no more process: quit
                 alarm(0)
                 return
@@ -381,7 +390,7 @@ class Process(Application):
 
     def getData(self, inputs):
         self.events = []
-        self.nevents = 0
+        self.nevents = dict()
         self.debugger = PtraceDebugger()
 
         self.runProcess([self.program]+inputs)
@@ -396,7 +405,7 @@ class Process(Application):
 
         self.process.terminate()
         self.process.detach()
-        #print "terminated!"
+        #print self.nevents
 
         self.process = None
         return self.events
