@@ -45,7 +45,7 @@ from MemoryMap import MemoryMaps
 from Alarm import alarm_handler, TimeoutEx
 
 class Process(Application):
-    def __init__(self, program, envs, timeout, included_mods = [], ignored_mods = [], no_stdout = True, max_events = 10000):
+    def __init__(self, program, envs, timeout, included_mods = [], ignored_mods = [], no_stdout = True, max_events = 320, min_events = -10*320):
 
         Application.__init__(self)  # no effect
 
@@ -64,6 +64,7 @@ class Process(Application):
         self.mm = None
         self.timeouts = 0
         self.max_events = max_events
+        self.min_events = min_events
 
         # Parse ELF
         self.elf = ELF(self.program, plt = False)
@@ -157,13 +158,22 @@ class Process(Application):
                   self.process.singleStep()
                   self.debugger.waitProcessEvent()
 
-                  n = self.nevents.get(name, 0)
-                  self.nevents[name] = n + 1
+                  n = self.nevents.get((ip,name), 0)
+                  self.nevents[(ip, name)] = n + 2
+ 
+                  for ((ip_,name_),n) in self.nevents.items():
+
+                    if n > self.min_events + 1:
+                      self.nevents[(ip_, name_)] = n - 1
+                    elif n == self.min_events + 1:
+                       self.nevents[(ip_, name_)] = self.min_events
+                       #print "restoring!", (ip, name)
+                       self.breakpoint(call_ip)
 
                   if n < self.max_events:
                     self.breakpoint(call_ip)
                   #else:
-                    #print "disabled!"
+                    #print "disabled!", (ip, name)
  
                   #print "call detected!"
                   return [call]
