@@ -122,13 +122,13 @@ def read_traces(train_file, nsamples, cut=None, maxsize=50):
     for i,col in enumerate(csvreader):
 
       if len(col) < 2:
-        print "Ignoring line", i, ":", col.join("\t")
+        print "Ignoring line", i, ":", "\t".join(col)
         continue
 
       program = col[0]
       features = col[1]
       if len(col) > 2:
-        cl = int(col[2])
+        cl = str(col[2]) #int(col[2])
       else:
         cl = -1
 

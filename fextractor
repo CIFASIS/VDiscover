@@ -67,7 +67,7 @@ if __name__ == "__main__":
                         help="Extract only dynamic features from a testcase",
                         action="store_true", default=False)
 
-    parser.add_argument("--mclass", type=int,
+    parser.add_argument("--mclass", type=str,
                         help="Include class column, to use later in training mode",
                         action="store", default=None)
 

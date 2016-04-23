@@ -311,9 +311,13 @@ def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
   for prog,[x,y],cl in zip(train_programs, X_red, train_classes):
     x = gauss(0,0.1) + x
     y = gauss(0,0.1) + y
-    plt.scatter(x, y, c=colors[cl])
-    plt.text(x, y+0.02, prog.split("/")[-1])
-
+    try:
+        plt.scatter(x, y, c=colors[int(cl)])
+        plt.text(x, y+0.02, prog.split("/")[-1])
+    except ValueError:
+        plt.text(x, y+0.02, cl)
+     
+   
 
   if valid_file is not None:
     valid_programs, valid_features, valid_classes = read_traces(valid_file, None)

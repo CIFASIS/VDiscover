@@ -24,8 +24,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB,  MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.decomposition import TruncatedSVD, PCA
-from sklearn.manifold import MDS
+from sklearn.decomposition import PCA
+#from sklearn.manifold import MDS
 
 from random import random, randint, sample, gauss
 
@@ -126,7 +126,13 @@ def make_cluster_pipeline_bow(ftype):
 
     ])
   elif ftype is "static":
-    raise NotImplemented
+    return Pipeline(steps=[
+         ('selector', ItemSelector(key='static')),
+         ('dvectorizer', TfidfVectorizer(tokenizer=dynamic_tokenizer, use_idf=False, norm=None, ngram_range=(1,1), lowercase=False)),
+         ('todense', DenseTransformer()),
+         ('cutfoff', CutoffMax(16)),
+         ('reducer', PCA(n_components=2)),
+    ])
   else:
     assert(0)
 

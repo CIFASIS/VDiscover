@@ -210,12 +210,12 @@ def RandomWalkElf(program, outfile, mclass, max_subtraces, max_explored_subtrace
     x = hash(r)
     size = len(r.split(" "))-1
 
-    if x not in traces and size >= min_size:
+    #if x not in traces and size >= min_size:
       #print r+" .",
-      collected_traces = collected_traces + r + " ."
-      traces.add(x)
-      if len(traces) >= max_subtraces:
-        break
+    collected_traces = collected_traces + r + " ."
+      #traces.add(x)
+      #if len(traces) >= max_subtraces:
+      #  break
 
   row = [elf.path, collected_traces]
   if mclass is not None:
