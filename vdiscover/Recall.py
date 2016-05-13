@@ -28,11 +28,12 @@ def Recall(model_file, in_file, in_type, out_file, test_mode, probability=False)
 
   if test_mode == "simple":
     nclasses = len(set(test_classes))
+    one_class = int(test_classes[0])
 
     if nclasses == 1:
       err = [None, None]
-      err[test_classes[0]] = recall_score(test_classes, predicted_classes, average=None)[0]
-      err[1 - test_classes[0]] = 1.0
+      err[one_class] = recall_score(test_classes, predicted_classes, average=None)[one_class]
+      err[1 - one_class] = err[one_class]
     else:
       err = recall_score(test_classes, predicted_classes, average=None)
 
