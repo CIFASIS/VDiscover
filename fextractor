@@ -148,6 +148,8 @@ if __name__ == "__main__":
       original_inputs = RandomInputMutator(args + files, NullMutator)
       #expanded_input_generator = RandomInputMutator(args + files, RandomExpanderMutator)
       mutated_input_generator = RandomInputMutator(args + files, RandomByteMutator)
+      if included_mods == []:
+        included_mods = [program]
 
       app = Process(program, envs, timeout, included_mods, ignored_mods, no_stdout = not show_stdout )
       prt = TypePrinter(csvfile, testcase, mclass)

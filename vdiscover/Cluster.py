@@ -27,7 +27,7 @@ import numpy as np
 import matplotlib as mpl
 
 # hack from https://stackoverflow.com/questions/2801882/generating-a-png-with-matplotlib-when-display-is-undefined to avoid using X
-mpl.use('Agg')
+#mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 from Utils import *
@@ -284,10 +284,6 @@ def TrainCnn(model_file, train_file, valid_file, ftype, nsamples):
 
 def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
 
-  #import matplotlib.pyplot as plt
-  #import matplotlib as mpl
-
-  #csvreader = open_csv(train_file)
   train_programs, train_features, train_classes = read_traces(train_file, nsamples)
   train_size = len(train_programs)
 
@@ -298,8 +294,6 @@ def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
   #batch_size = 16
   #window_size = 20
 
-  #from sklearn.cluster import MeanShift
-
   print "Transforming data and fitting model.."
   model = make_cluster_pipeline_bow(ftype)
   X_red = model.fit_transform(train_dict)
@@ -307,6 +301,7 @@ def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
   #mpl.rcParams.update({'font.size': 10})
   plt.figure()
   colors = 'brgcmykbgrcmykbgrcmykbgrcmyk'
+  ncolors = len(colors)
 
   for prog,[x,y],cl in zip(train_programs, X_red, train_classes):
     x = gauss(0,0.1) + x
@@ -332,26 +327,37 @@ def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
       plt.text(x, y+0.02, prog.split("/")[-1])
 
   plt.show()
-  #af = MeanShift().fit(X_red)
+  from sklearn.cluster import MeanShift, estimate_bandwidth
 
-  #cluster_centers = af.cluster_centers_
-  #labels = af.labels_
-  #n_clusters_ = len(cluster_centers)
+  bandwidth = estimate_bandwidth(X_red, quantile=0.2)
+  print "Clustering with bandwidth:", bandwidth
 
-  #plt.close('all')
-  #plt.figure(1)
-  #plt.clf()
+  af = MeanShift(bandwidth=bandwidth/5).fit(X_red)
 
-  #for k, col in zip(range(n_clusters_), colors):
-  #  my_members = labels == k
-  #  cluster_center = cluster_centers[k]
-  #  plt.plot(X_red[my_members, 0], X_red[my_members, 1], col + '.')
-  #  plt.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
-  #           markeredgecolor='k', markersize=14)
+  cluster_centers = af.cluster_centers_
+  labels = af.labels_
+  n_clusters_ = len(cluster_centers)
 
+  plt.close('all')
+  plt.figure(1)
+  plt.clf()
 
-  #plt.title('Estimated number of clusters: %d' % n_clusters_)
-  #plt.show()
+  for ([x,y],label, cluster_label) in zip(X_red,train_programs, labels):
+    x = gauss(0,0.1) + x
+    y = gauss(0,0.1) + y
+    plt.scatter(x, y, c = colors[cluster_label % ncolors])
+
+  for i,[x,y] in enumerate(cluster_centers):
+    plt.plot(x, y, 'o', markerfacecolor=colors[i % ncolors],
+             markeredgecolor='k', markersize=7)
+
+  plt.title('Estimated number of clusters: %d' % n_clusters_)
+  plt.show()
+
+  clustered_traces = zip(train_programs, labels)
+  writer = write_csv(train_file.replace(".gz","")+".clusters")
+  for label, cluster in clustered_traces:
+     writer.writerow([label, cluster])
 
 def Cluster(train_file, valid_file, ftype, nsamples):
 

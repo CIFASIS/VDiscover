@@ -70,7 +70,7 @@ if __name__ == "__main__":
     traces_path = outfile#outdir+"/traces.raw"
 
     if os.path.exists(traces_path):
-      traces = traces_path
+      print traces_path, "exists. I will not overwritte it. Aborting"
     else:
 
       modules_to_trace = [main_module]
