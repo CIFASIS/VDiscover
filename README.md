@@ -16,10 +16,15 @@ VDiscover aims to be used when there is a **large** amount of testcases to analy
 * [matplotlib](http://matplotlib.org/) for visualization (very experimental, optional)
 * [keras](http://keras.io/) for convolutional clustering (very experimental, optional)
 
+**Trace extraction is working only in x86** (x86_64 support should be simple to extend and it is planned)
 
 ## Quickstart
 
-Before starting, it is recommended to manually install binutils, scikit-learn and setuptools (to perform a local installation). Then we can execute:
+Before starting, it is recommended to manually install binutils, scikit-learn and setuptools (to perform a local installation). For instance, in Ubuntu/Debian:
+
+    # apt-get install python-numpy python-matplotlib python-setup python-scipy
+
+Then we can execute:
 
     git clone https://github.com/CIFASIS/VDiscover.git
     cd VDiscover
