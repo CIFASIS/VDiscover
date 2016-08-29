@@ -69,9 +69,9 @@ class Process(Application):
         # Parse ELF
         self.elf = ELF(self.program, plt = False)
 
-        if self.elf.GetType() <> "ELF 32-bit":
-          print "Only ELF 32-bit are supported to be executed."
-          exit(-1)
+        #if self.elf.GetType() <> "ELF 32-bit":
+        #  print "Only ELF 32-bit are supported to be executed."
+        #  exit(-1)
 
         self.modules = dict()
 
@@ -86,10 +86,10 @@ class Process(Application):
     def setBreakpoints(self, elf):
       #print elf.GetFunctions()
       for func_name in elf.GetFunctions():
-        #print elf.GetModname(), hex(elf.FindFuncInPlt(func_name))
+        #print "func_name", elf.GetModname(), hex(elf.FindFuncInPlt(func_name))
 
         if func_name in specs:
-          #print elf.GetModname(), func_name, hex(elf.FindFuncInPlt(func_name))
+          #print "func_name in spec",elf.GetModname(), func_name, hex(elf.FindFuncInPlt(func_name))
           addr = elf.FindFuncInPlt(func_name)
           self.binfo[addr] = elf.GetModname(),func_name
           self.breakpoint(addr)

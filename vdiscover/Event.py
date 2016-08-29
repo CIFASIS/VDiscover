@@ -50,18 +50,33 @@ class Call(Event):
   def __str__(self):
     return str(self.name)
 
-  def _detect_return_address(self):
-    addr = self.process.getreg("esp")
-    bytes = self.process.readBytes(addr, 4)
-    return RefinePType(Type("Ptr32",4),bytes2word(bytes), self.process, self.mm)
-    #return bytes2word(bytes)
+  #def _detect_return_address(self):
+  #  addr = self.process.getreg("esp")
+  #  bytes = self.process.readBytes(addr, 4)
+  #  return RefinePType(Type("Ptr32",4),bytes2word(bytes), self.process, self.mm)
+  #  #return bytes2word(bytes)
 
-  def _detect_parameter(self, ptype, offset):
+  def _detect_parameter_x86_64(self, ptype, index):
+
+    if index > 4:
+      return None   
+
+    reg = ["rdi","rsi","rdx","rcx","r8"][index]
+    val = self.process.getreg(reg)
+
+    #print "bs value", repr(bs), hex(bytes2word(bs))
+
+    return RefinePType(GetPtype(ptype),val, self.process, self.mm)
+
+
+
+
+  def _detect_parameter_x86(self, ptype, offset):
     addr = self.process.getStackPointer()+offset
     bs = self.process.readBytes(addr, 4)
 
-    if CPU_X86_64:
-      bs = bs + (4*'\00')
+    #if CPU_X86_64:
+    #  bs = bs + (4*'\00')
 
     #print "bs value", repr(bs), hex(bytes2word(bs))
 
@@ -79,9 +94,13 @@ class Call(Event):
     offset = 4
     #print self.mm
     #print self.name
-    for ctype in self.param_types:
+    for index,ctype in enumerate(self.param_types):
 
-      (ptype, value) = self._detect_parameter(ctype, offset)
+      if CPU_X86_64:
+        (ptype, value) = self._detect_parameter_x86_64(ctype, index)
+      else:
+        (ptype, value) = self._detect_parameter_x86(ctype, offset)
+
       self.param_values.append(value)
       self.param_ptypes.append(ptype)
       offset += ptype.getSize()
