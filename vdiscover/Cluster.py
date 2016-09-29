@@ -281,21 +281,42 @@ def TrainCnn(model_file, train_file, valid_file, ftype, nsamples):
   #model.save_weights(model_file)
   modelfile.write(pickle.dumps(preprocessor, protocol=2))
 
-
-def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
+"""
+def ClusterDoc2Vec(model_file, train_file, valid_file, ftype, nsamples, param):
 
   train_programs, train_features, train_classes = read_traces(train_file, nsamples)
   train_size = len(train_programs)
 
   print "using", train_size,"examples to train."
 
+  from gensim.models.doc2vec import TaggedDocument
+  from gensim.models import Doc2Vec
+
+  print "Vectorizing traces.."
+  sentences = []
+  
+  for (prog,trace) in zip(train_programs,train_features):
+     sentences.append(TaggedDocument(trace.split(" "), [prog]))
+
+  model = Doc2Vec(dm=2, min_count=1, window=5, size=100, sample=1e-4, negative=5, workers=8, iter=1)
+  model.build_vocab(sentences)
+
+  for epoch in range(20):
+    #print model
+    model.train(sentences)
+    shuffle(sentences)
+
   train_dict = dict()
-  train_dict[ftype] = train_features
-  #batch_size = 16
-  #window_size = 20
+
+  vec_train_features = []
+  for prog in train_programs:
+    #print prog, model.docvecs[prog]
+    vec_train_features.append(model.docvecs[prog])
+
+  train_dict[ftype] = vec_train_features
 
   print "Transforming data and fitting model.."
-  model = make_cluster_pipeline_bow(ftype)
+  model = make_cluster_pipeline_doc2vec(ftype)
   X_red = model.fit_transform(train_dict)
 
   #mpl.rcParams.update({'font.size': 10})
@@ -311,28 +332,16 @@ def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
         plt.text(x, y+0.02, prog.split("/")[-1])
     except ValueError:
         plt.text(x, y+0.02, cl)
-     
-   
 
-  if valid_file is not None:
-    valid_programs, valid_features, valid_classes = read_traces(valid_file, None)
-    valid_dict = dict()
-    valid_dict[ftype] = valid_features
+  #plt.show() 
+  plt.savefig(train_file.replace(".gz","")+".png")
 
-    X_red = model.transform(valid_dict)
-    for prog,[x,y],cl in zip(valid_programs, X_red, valid_classes):
-      x = gauss(0,0.1) + x
-      y = gauss(0,0.1) + y
-      plt.scatter(x, y, c=colors[cl+1])
-      plt.text(x, y+0.02, prog.split("/")[-1])
-
-  plt.show()
   from sklearn.cluster import MeanShift, estimate_bandwidth
 
   bandwidth = estimate_bandwidth(X_red, quantile=0.2)
   print "Clustering with bandwidth:", bandwidth
 
-  af = MeanShift(bandwidth=bandwidth/5).fit(X_red)
+  af = MeanShift(bandwidth=bandwidth*param).fit(X_red)
 
   cluster_centers = af.cluster_centers_
   labels = af.labels_
@@ -352,27 +361,137 @@ def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples):
              markeredgecolor='k', markersize=7)
 
   plt.title('Estimated number of clusters: %d' % n_clusters_)
-  plt.show()
+  plt.savefig(train_file.replace(".gz","")+".clusters.png")
+
+  #plt.show()
 
   clustered_traces = zip(train_programs, labels)
   writer = write_csv(train_file.replace(".gz","")+".clusters")
   for label, cluster in clustered_traces:
-     writer.writerow([label, cluster])
+     writer.writerow([label.split("/")[-1], cluster])
 
-def Cluster(train_file, valid_file, ftype, nsamples):
+"""
 
-  ClusterScikit(None, train_file, valid_file, ftype, nsamples)
+def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples, vectorizer, reducer, param):
 
-  #if ttype == "cluster":
-    #ClusterScikit(out_file, train_file, valid_file, ftype, nsamples)
+  train_programs, train_features, train_classes = read_traces(train_file, nsamples)
+  train_size = len(train_programs)
+  print "using", train_size,"examples to train."
 
-    #try:
-    #  import keras
-    #except:
-    #  print "Failed to import keras modules to perform LSTM training"
-    #  return
+  if vectorizer == "bow":
+ 
+    train_dict = dict()
+    train_dict[ftype] = train_features
+    #batch_size = 16
+    #window_size = 20
 
-    #if model_file is None:
-    #  TrainDeepRepr(out_file, train_file, valid_file, ftype, nsamples)
-    #else:
-    #  PlotDeepRepr(model_file, train_file, valid_file, ftype, nsamples, outfile)
+    print "Transforming data and fitting model.."
+    model = make_cluster_pipeline_bow(ftype, reducer)
+    X_red = model.fit_transform(train_dict)
+
+  elif vectorizer == "doc2vec":
+
+    from gensim.models.doc2vec import TaggedDocument
+    from gensim.models import Doc2Vec
+
+    print "Vectorizing traces.."
+    sentences = []
+  
+    for (prog,trace) in zip(train_programs,train_features):
+      sentences.append(TaggedDocument(trace.split(" "), [prog]))
+
+    model = Doc2Vec(dm=2, min_count=1, window=5, size=100, sample=1e-4, negative=5, workers=8, iter=1)
+    model.build_vocab(sentences)
+
+    for epoch in range(20):
+      #print model
+      model.train(sentences)
+      shuffle(sentences)
+
+    train_dict = dict()
+
+    vec_train_features = []
+    for prog in train_programs:
+      #print prog, model.docvecs[prog]
+      vec_train_features.append(model.docvecs[prog])
+
+    train_dict[ftype] = vec_train_features
+
+    print "Transforming data and fitting model.."
+    model = make_cluster_pipeline_doc2vec(ftype, reducer)
+    X_red = model.fit_transform(train_dict)
+
+
+  #pl.rcParams.update({'font.size': 10})
+  if type(X_red) == list:
+    X_red = np.vstack(X_red)
+    print X_red.shape 
+
+  if X_red.shape[1] == 2:
+
+    plt.figure()
+    colors = 'brgcmykbgrcmykbgrcmykbgrcmyk'
+    ncolors = len(colors)
+
+    for prog,[x,y],cl in zip(train_programs, X_red, train_classes):
+      x = gauss(0,0.1) + x
+      y = gauss(0,0.1) + y
+      try:
+          plt.scatter(x, y, c=colors[int(cl)])
+          plt.text(x, y+0.02, prog.split("/")[-1])
+      except ValueError:
+          plt.text(x, y+0.02, cl)
+     
+   
+
+    if valid_file is not None:
+      valid_programs, valid_features, valid_classes = read_traces(valid_file, None)
+      valid_dict = dict()
+      valid_dict[ftype] = valid_features
+
+      X_red = model.transform(valid_dict)
+      for prog,[x,y],cl in zip(valid_programs, X_red, valid_classes):
+        x = gauss(0,0.1) + x
+        y = gauss(0,0.1) + y
+        plt.scatter(x, y, c=colors[cl+1])
+        plt.text(x, y+0.02, prog.split("/")[-1])
+
+    #plt.show()
+    plt.savefig(train_file.replace(".gz","")+".png")
+
+
+  from sklearn.cluster import MeanShift, estimate_bandwidth
+
+  bandwidth = estimate_bandwidth(X_red, quantile=0.2)
+  print "Clustering with bandwidth:", bandwidth
+
+  af = MeanShift(bandwidth=bandwidth*param).fit(X_red)
+
+  cluster_centers = af.cluster_centers_
+  labels = af.labels_
+  n_clusters_ = len(cluster_centers)
+
+  if X_red.shape[1] == 2:
+
+    plt.close('all')
+    plt.figure(1)
+    plt.clf()
+
+    for ([x,y],label, cluster_label) in zip(X_red,train_programs, labels):
+      x = gauss(0,0.1) + x
+      y = gauss(0,0.1) + y
+      plt.scatter(x, y, c = colors[cluster_label % ncolors])
+
+    for i,[x,y] in enumerate(cluster_centers):
+      plt.plot(x, y, 'o', markerfacecolor=colors[i % ncolors],
+               markeredgecolor='k', markersize=7)
+
+    plt.title('Estimated number of clusters: %d' % n_clusters_)
+    plt.savefig(train_file.replace(".gz","")+".clusters.png")
+
+  #plt.show()
+
+  clustered_traces = zip(train_programs, labels)
+  writer = write_csv(train_file.replace(".gz","")+".clusters")
+  for label, cluster in clustered_traces:
+     writer.writerow([label.split("/")[-1], cluster])

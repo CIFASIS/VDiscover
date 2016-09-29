@@ -24,10 +24,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB,  MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, TruncatedSVD
 #from sklearn.manifold import MDS
 
-from random import random, randint, sample, gauss
+from random import random, randint, sample, gauss, shuffle
 
 def static_tokenizer(s):
     return filter(lambda x: x<>'', s.split(" "))
@@ -115,16 +115,38 @@ def make_train_pipeline(ftype):
   else:
     assert(0)
 
-def make_cluster_pipeline_bow(ftype):
-  if ftype is "dynamic":
+def make_cluster_pipeline_bow(ftype, rdim):
+  if ftype is "dynamic" and rdim == "pca":
+
     return Pipeline(steps=[
          ('selector', ItemSelector(key='dynamic')),
          ('dvectorizer', TfidfVectorizer(tokenizer=dynamic_tokenizer, use_idf=False, norm=None, ngram_range=(1,1), lowercase=False)),
          ('todense', DenseTransformer()),
-         ('cutfoff', CutoffMax(16)),
+         #('cutfoff', CutoffMax(16)),
          ('reducer', PCA(n_components=2)),
 
     ])
+
+  elif ftype is "dynamic" and rdim == "svd":
+
+    return Pipeline(steps=[
+         ('selector', ItemSelector(key='dynamic')),
+         ('dvectorizer', TfidfVectorizer(tokenizer=dynamic_tokenizer, use_idf=False, norm=None, ngram_range=(1,1), lowercase=False)),
+         ('todense', DenseTransformer()),
+         #('cutfoff', CutoffMax(16)),
+         ('reducer', TruncatedSVD(n_components=2)),
+
+    ])
+
+  elif ftype is "dynamic" and rdim == "none":
+
+    return Pipeline(steps=[
+         ('selector', ItemSelector(key='dynamic')),
+         ('dvectorizer', TfidfVectorizer(tokenizer=dynamic_tokenizer, use_idf=False, norm=None, ngram_range=(1,1), lowercase=False)),
+         ('todense', DenseTransformer()),
+         #('cutfoff', CutoffMax(16)),
+    ])
+
   elif ftype is "static":
     return Pipeline(steps=[
          ('selector', ItemSelector(key='static')),
@@ -136,11 +158,33 @@ def make_cluster_pipeline_bow(ftype):
   else:
     assert(0)
 
+
+def make_cluster_pipeline_doc2vec(ftype, rdim):
+  if ftype is "dynamic" and rdim == "pca":
+    return Pipeline(steps=[
+         ('selector', ItemSelector(key='dynamic')),
+         ('reducer', PCA(n_components=2)),
+    ])
+  elif ftype is "dynamic" and rdim == "svd":
+    return Pipeline(steps=[
+         ('selector', ItemSelector(key='dynamic')),
+         ('reducer', TruncatedSVD(n_components=2)),
+    ])
+  elif ftype is "dynamic" and rdim == "none":
+    return Pipeline(steps=[
+         ('selector', ItemSelector(key='dynamic'))
+    ])
+  elif ftype is "static":
+    raise NotImplemented
+  else:
+    assert(0)
+
+
+
 def make_cluster_pipeline_subtraces(ftype):
   if ftype is "dynamic":
     return Pipeline(steps=[
          ('selector', ItemSelector(key='dynamic')),
-         #('todense', DenseTransformer()),
          ('reducer', PCA(n_components=12)),
     ])
   elif ftype is "static":

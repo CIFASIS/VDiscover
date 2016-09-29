@@ -66,9 +66,21 @@ if __name__ == "__main__":
                         help="Valid a model using infile",
                         action="store", default=None)
 
-    parser.add_argument("--cluster-bow",
-                        help="Cluster input traces using BOW",
-                        action="store_true", default=False)
+    parser.add_argument("--cluster-with-repr",
+                        help="Cluster input traces using some representation (bow, doc2vec)",
+                        action="store", default=None)
+
+    parser.add_argument("--cluster-with-rdim",
+                        help="Cluster input traces reducing dimensionality (pca, svd, none)",
+                        action="store", default="pca")
+
+    #parser.add_argument("--cluster-doc2vec",
+    #                    help="Cluster input traces using doc2vec",
+    #                    action="store_true", default=False)
+
+    parser.add_argument("--cluster-param", type=float,
+                        help="Cluster parameter",
+                        action="store", default=0.1)
 
     parser.add_argument("--cluster-cnn",
                         help="Cluster input traces using a convolutional model",
@@ -105,10 +117,12 @@ if __name__ == "__main__":
     #training_mode_lstm = options.train_lstm
     #training_mode_cnn = options.train_cnn
 
-    training_mode_cluster_bow = options.cluster_bow
-    training_mode_cluster_cnn = options.cluster_cnn
+    training_mode_cluster_repr = options.cluster_with_repr
 
-    training_mode = training_mode_rf or training_mode_cluster_bow or training_mode_cluster_cnn
+    cluster_rdim = options.cluster_with_rdim
+    cluster_param = options.cluster_param
+
+    training_mode = training_mode_rf or training_mode_cluster_repr #training_mode_cluster_bow or training_mode_cluster_cnn or training_mode_cluster_doc2vec
 
     probability_mode = options.prob
     nsamples = options.n_samples
@@ -130,25 +144,25 @@ if __name__ == "__main__":
     if training_mode:
       if training_mode_rf:
         Train(out_file, in_file, valid_file, "rf", ftype, nsamples)
-      #elif training_mode_cnn:
-      elif training_mode_cluster_bow:
+
+      elif training_mode_cluster_repr:
+        cluster_repr = training_mode_cluster_repr
         from vdiscover.Cluster  import ClusterScikit
 
-        #Cluster(in_file, valid_file, ftype, nsamples)
-        ClusterScikit(None, in_file, valid_file, ftype, nsamples)
+        ClusterScikit(None, in_file, valid_file, ftype, nsamples, cluster_repr, cluster_rdim, cluster_param)
+
+      """
       elif training_mode_cluster_cnn:
 
-        #Cluster(in_file, valid_file, ftype, nsamples)
         if (model_file is None):
           from vdiscover.Cluster import TrainCnn
 
           TrainCnn(out_file, in_file, valid_file, ftype, nsamples)
-          #print "Clustering using a convolutional model requires a pre-trained model"
           exit(0)
 
         from vdiscover.Cluster  import ClusterCnn
         ClusterCnn(model_file, in_file, valid_file, ftype, nsamples, None)
-
+      """
 
     else:
       if model_file is None:

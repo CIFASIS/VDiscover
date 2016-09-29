@@ -94,7 +94,7 @@ if __name__ == "__main__":
         nfiles = len(files)
         #print "Processing directory ","./"++("/".join(y)), "with", nfiles, "seeds"
         for f in files:
-          all_files.append(x+"/".join(y)+"/"+f)
+          all_files.append(x+"/".join(y)+f)
 
       random.shuffle(all_files)
       nfiles = len(all_files)
