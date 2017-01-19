@@ -19,7 +19,6 @@ Copyright 2014 by G.Grieco
 """
 
 
-
 #from ptrace.debugger.child import createChild
 from os import system, dup2, close, open as fopen, O_RDONLY
 from sys import stdin
@@ -38,6 +37,7 @@ c = 0
 class ChildError(RuntimeError):
     pass
 
+
 def _execChild(arguments, no_stdout, env):
     if no_stdout:
         try:
@@ -45,7 +45,7 @@ def _execChild(arguments, no_stdout, env):
             dup2(null.fileno(), 1)
             dup2(1, 2)
             null.close()
-        except IOError, err:
+        except IOError as err:
             close(2)
             close(1)
     try:
@@ -53,8 +53,9 @@ def _execChild(arguments, no_stdout, env):
             execve(arguments[0], arguments, env)
         else:
             execv(arguments[0], arguments)
-    except Exception, err:
+    except Exception as err:
         raise ChildError(str(err))
+
 
 def createChild(arguments, no_stdout, env=None):
     """
@@ -73,66 +74,66 @@ def createChild(arguments, no_stdout, env=None):
     if pid:
         return pid
     else:
-        #print "limit",getrlimit(RLIMIT_DATA)
-        setrlimit(RLIMIT_AS, (1024*1024*1024, -1))
-        #print "limit",getrlimit(RLIMIT_DATA)
+        # print "limit",getrlimit(RLIMIT_DATA)
+        setrlimit(RLIMIT_AS, (1024 * 1024 * 1024, -1))
+        # print "limit",getrlimit(RLIMIT_DATA)
 
         try:
-          ptrace_traceme()
-        except PtraceError, err:
-          raise ChildError(str(err))
+            ptrace_traceme()
+        except PtraceError as err:
+            raise ChildError(str(err))
 
         _execChild(arguments, no_stdout, env)
         exit(255)
 
 
 def Launch(cmd, no_stdout, env):
-  global fds
-  global c
-  c = c + 1
-  #cmd = ["/usr/bin/timeout", "-k", "1", "3"]+cmd
-  #print cmd
-  if cmd[-1][0:2] == "< ":
-    filename = cmd[-1].replace("< ", "")
+    global fds
+    global c
+    c = c + 1
+    #cmd = ["/usr/bin/timeout", "-k", "1", "3"]+cmd
+    # print cmd
+    if cmd[-1][0:2] == "< ":
+        filename = cmd[-1].replace("< ", "")
 
-    #try:
-    #  close(3)
-    #except OSError:
-    #  print "OsError!"
-    #  pass
+        # try:
+        #  close(3)
+        # except OSError:
+        #  print "OsError!"
+        #  pass
 
-    for fd in fds:
-      #print fd,
-      try:
-        close(fd)
-        #print "closed!"
-      except OSError:
-        #print "failed close!"
-        pass
+        for fd in fds:
+            # print fd,
+            try:
+                close(fd)
+                # print "closed!"
+            except OSError:
+                # print "failed close!"
+                pass
 
-    fds = []
+        fds = []
 
-    desc = fopen(filename,O_RDONLY)
-    fds.append(desc)
-    dup2(desc, stdin.fileno())
-    fds.append(desc)
-    #close(desc)
+        desc = fopen(filename, O_RDONLY)
+        fds.append(desc)
+        dup2(desc, stdin.fileno())
+        fds.append(desc)
+        # close(desc)
 
-    cmd = cmd[:-1]
+        cmd = cmd[:-1]
 
-  #print "c:", c
-  #print "self pid", getpid()
+    # print "c:", c
+    # print "self pid", getpid()
 
-  r = createChild(cmd, no_stdout, env)
+    r = createChild(cmd, no_stdout, env)
 
-  #print "new pid", r
-  #print "self pid", getpid()
-  #print "Done!"
+    # print "new pid", r
+    # print "self pid", getpid()
+    # print "Done!"
 
-  return r
+    return r
 
 
-#class Runner:
+# class Runner:
 #    def __init__(self, cmd, timeout):
 #        #threading.Thread.__init__(self)
 #

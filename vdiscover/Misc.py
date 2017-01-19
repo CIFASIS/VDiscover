@@ -17,18 +17,26 @@ along with VDISCOVER. If not, see <http://www.gnu.org/licenses/>.
 Copyright 2014 by G.Grieco
 """
 
-import socket, re, os, stat, errno, string, base64
+import socket
+import re
+import os
+import stat
+import errno
+import string
+import base64
+
 
 def readmodfile(modfile):
-  hooked_mods = [] 
-  if modfile is not None:
-    hooked_mods =  open(modfile).read().split("\n")
-    hooked_mods = filter(lambda x: x <> '', hooked_mods)
-  return hooked_mods
+    hooked_mods = []
+    if modfile is not None:
+        hooked_mods = open(modfile).read().split("\n")
+        hooked_mods = filter(lambda x: x != '', hooked_mods)
+    return hooked_mods
 
 """
 from pwntools
 """
+
 
 def parse_ldd_output(output):
     """Parses the output from a run of 'ldd' on a binary.
@@ -48,8 +56,9 @@ def parse_ldd_output(output):
         ... ''').keys())
         ['/lib/x86_64-linux-gnu/libc.so.6', '/lib/x86_64-linux-gnu/libdl.so.2', '/lib/x86_64-linux-gnu/libtinfo.so.5', '/lib64/ld-linux-x86-64.so.2']
     """
-    expr_linux   = re.compile(r'\s(?P<lib>\S?/\S+)\s+\((?P<addr>0x.+)\)')
-    expr_openbsd = re.compile(r'^\s+(?P<addr>[0-9a-f]+)\s+[0-9a-f]+\s+\S+\s+[01]\s+[0-9]+\s+[0-9]+\s+(?P<lib>\S+)$')
+    expr_linux = re.compile(r'\s(?P<lib>\S?/\S+)\s+\((?P<addr>0x.+)\)')
+    expr_openbsd = re.compile(
+        r'^\s+(?P<addr>[0-9a-f]+)\s+[0-9a-f]+\s+\S+\s+[01]\s+[0-9]+\s+[0-9]+\s+(?P<lib>\S+)$')
     libs = {}
 
     for s in output.split('\n'):
@@ -88,8 +97,8 @@ def sh_string(s):
     """
 
     very_good = set(string.ascii_letters + string.digits)
-    good      = (very_good | set(string.punctuation + ' ')) - set("'")
-    alt_good  = (very_good | set(string.punctuation + ' ')) - set('!')
+    good = (very_good | set(string.punctuation + ' ')) - set("'")
+    alt_good = (very_good | set(string.punctuation + ' ')) - set('!')
 
     if '\x00' in s:
         log.error("sh_string(): Cannot create a null-byte")
@@ -115,7 +124,5 @@ def sh_string(s):
                 fixed += c
             else:
                 fixed += '\\x%02x' % ord(c)
-        return '"$( (echo %s|(base64 -d||openssl enc -d -base64)||echo -en \'%s\') 2>/dev/null)"' % (base64.b64encode(s), fixed)
-
-
-
+        return '"$( (echo %s|(base64 -d||openssl enc -d -base64)||echo -en \'%s\') 2>/dev/null)"' % (
+            base64.b64encode(s), fixed)

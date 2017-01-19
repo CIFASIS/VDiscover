@@ -33,10 +33,20 @@ csv.field_size_limit(sys.maxsize)
 if __name__ == "__main__":
 
     # Arguments
-    parser = argparse.ArgumentParser(description='A small utility to perform seed selection for fuzzig')
-    parser.add_argument("infile", help="A csv with the features to train or predict", type=str, default=None)
-    parser.add_argument("outdir", help="A directory with the seeds", type=str, default=None)
-    parser.add_argument("-n", help="Number of seeds to select per cluster", type=int, default=1)
+    parser = argparse.ArgumentParser(
+        description='A small utility to perform seed selection for fuzzig')
+    parser.add_argument(
+        "infile",
+        help="A csv with the features to train or predict",
+        type=str,
+        default=None)
+    parser.add_argument(
+        "outdir", help="A directory with the seeds", type=str, default=None)
+    parser.add_argument(
+        "-n",
+        help="Number of seeds to select per cluster",
+        type=int,
+        default=1)
     #parser.add_argument("--random", help="Sample randomly", action="store_true", default=None)
 
     options = parser.parse_args()
@@ -47,14 +57,14 @@ if __name__ == "__main__":
     reader = load_csv(in_file)
     clusters = []
     for [label, cluster] in reader:
-      clusters.append((label.split(":")[-1], cluster))
+        clusters.append((label.split(":")[-1], cluster))
 
     selected = cluster_sampler(clusters, nseeds)
 
     if not os.path.exists(outdir):
-      os.makedirs(outdir)
+        os.makedirs(outdir)
 
     print "Copying seeds.."
     for seed in selected:
-      print seed
-      shutil.copy(seed, outdir)
+        print seed
+        shutil.copy(seed, outdir)

@@ -25,61 +25,73 @@ import sys
 import csv
 
 from vdiscover.Detection import WriteTestcase
-concatenate = lambda *lists: reduce((lambda a,b: a.extend(b) or a),lists,[])
+from functools import reduce
+concatenate = lambda *lists: reduce((lambda a, b: a.extend(b) or a), lists, [])
 
 if __name__ == "__main__":
 
     # Arguments
-    parser = argparse.ArgumentParser(description='A small utility to create new test cases using a name and a command line')
-    parser.add_argument("--name", help="The name of the ", type=str, default=None)
-    parser.add_argument("--cmd", help="Command-line to execute", type=str, default=None)
-    parser.add_argument("--batch", help="A csv with the command lines", type=str, default=None)
+    parser = argparse.ArgumentParser(
+        description='A small utility to create new test cases using a name and a command line')
+    parser.add_argument("--name", help="The name of the ",
+                        type=str, default=None)
+    parser.add_argument(
+        "--cmd", help="Command-line to execute", type=str, default=None)
+    parser.add_argument(
+        "--batch", help="A csv with the command lines", type=str, default=None)
 
-    parser.add_argument("--copy", help="Force the copy of the files in command lines instead of symbolic linking", action='store_true', default=False)
+    parser.add_argument(
+        "--copy",
+        help="Force the copy of the files in command lines instead of symbolic linking",
+        action='store_true',
+        default=False)
 
-    parser.add_argument("outdir", help="Output directory to write testcases", type=str, default=None)
+    parser.add_argument(
+        "outdir",
+        help="Output directory to write testcases",
+        type=str,
+        default=None)
 
     options = parser.parse_args()
     name = options.name
     cmd = options.cmd
     in_file = options.batch
     copy = options.copy
-    out_dir= options.outdir
+    out_dir = options.outdir
 
     if (name is not None and cmd is not None) ^ (in_file is not None):
-      pass
+        pass
     else:
-      #or (name not is None and cmd is not None) and in_file is None:
-      print "Either name and command should be used or an input file"
-      exit(-1)
+        # or (name not is None and cmd is not None) and in_file is None:
+        print "Either name and command should be used or an input file"
+        exit(-1)
 
     try:
-      os.makedirs(out_dir)
+        os.makedirs(out_dir)
     except:
-      pass
+        pass
 
     if in_file is not None:
-      infile = open(in_file,"r")
-      csvreader = csv.reader(infile, delimiter='\t')
-      os.chdir(out_dir)
+        infile = open(in_file, "r")
+        csvreader = csv.reader(infile, delimiter='\t')
+        os.chdir(out_dir)
 
-      for i,row in enumerate(csvreader):
-        args = filter(lambda x: x is not '', row[0].split(" "))
-        name = args[0].replace("/","_")+":"+str(i)
-        WriteTestcase(name,args[0],args[1:], copy)
+        for i, row in enumerate(csvreader):
+            args = filter(lambda x: x is not '', row[0].split(" "))
+            name = args[0].replace("/", "_") + ":" + str(i)
+            WriteTestcase(name, args[0], args[1:], copy)
 
     else:
 
-      os.chdir(out_dir)
-      args = cmd.split("'")
-      args = map(lambda x: x.split(" "), args)
-      pargs = []
+        os.chdir(out_dir)
+        args = cmd.split("'")
+        args = map(lambda x: x.split(" "), args)
+        pargs = []
 
-      for arg in args:
-        if arg <> '':
-          pargs = pargs + arg
-      #args = concatenate(args)
-      print "Procesing '" + " ".join(pargs) + "'"
-      #args = filter(lambda x: x is not '', cmd.split(" "))
-      WriteTestcase(name,pargs[0],pargs[1:], copy)
-
+        for arg in args:
+            if arg != '':
+                pargs = pargs + arg
+        #args = concatenate(args)
+        print "Procesing '" + " ".join(pargs) + "'"
+        #args = filter(lambda x: x is not '', cmd.split(" "))
+        WriteTestcase(name, pargs[0], pargs[1:], copy)

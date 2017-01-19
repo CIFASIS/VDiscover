@@ -25,25 +25,32 @@ import sys
 import csv
 
 csv.field_size_limit(sys.maxsize)
-sys.setrecursionlimit(1024*1024*1024)
+sys.setrecursionlimit(1024 * 1024 * 1024)
 
 from vdiscover.Pipeline import *
-from vdiscover.Recall  import Recall
-from vdiscover.Train  import Train
+from vdiscover.Recall import Recall
+from vdiscover.Train import Train
 
 if __name__ == "__main__":
 
     # Arguments
-    parser = argparse.ArgumentParser(description='A trainer and predictor of vulnerabilities')
-    parser.add_argument("infile", help="A csv with the features to train or predict", type=str, default=None)
+    parser = argparse.ArgumentParser(
+        description='A trainer and predictor of vulnerabilities')
+    parser.add_argument(
+        "infile",
+        help="A csv with the features to train or predict",
+        type=str,
+        default=None)
 
     parser.add_argument("--model", type=str,
                         help="Use a pretrained model (recall only)",
                         action="store", default=None)
 
-    parser.add_argument("--prob",
-                        help="Output the probability of each prediction (recall only)",
-                        action="store_true", default=False)
+    parser.add_argument(
+        "--prob",
+        help="Output the probability of each prediction (recall only)",
+        action="store_true",
+        default=False)
 
     parser.add_argument("--test",
                         help="Test a model using infile (recall only)",
@@ -53,7 +60,6 @@ if __name__ == "__main__":
                         help="Test a model using infile (recall only)",
                         action="store_true", default=False)
 
-
     parser.add_argument("--static",
                         help="Use static features",
                         action="store_true", default=False)
@@ -62,45 +68,59 @@ if __name__ == "__main__":
                         help="Use dynamic features",
                         action="store_true", default=False)
 
-    parser.add_argument("--valid",
-                        help="Valid a model using infile",
-                        action="store", default=None)
+    #parser.add_argument("--valid",
+    #                    help="Valid a model using infile",
+    #                    action="store", default=None)
 
-    parser.add_argument("--cluster-with-repr",
-                        help="Cluster input traces using some representation (bow, doc2vec)",
-                        action="store", default=None)
+    #parser.add_argument(
+    #    "--cluster-with-repr",
+    #    help="Cluster input traces using some representation (bow, doc2vec)",
+    #    action="store",
+    #    default=None)
 
-    parser.add_argument("--cluster-with-rdim",
-                        help="Cluster input traces reducing dimensionality (pca, svd, none)",
-                        action="store", default="pca")
+    #parser.add_argument(
+    #    "--cluster-with-rdim",
+    #    help="Cluster input traces reducing dimensionality (pca, svd, none)",
+    #    action="store",
+    #    default="pca")
 
-    #parser.add_argument("--cluster-doc2vec",
+    # parser.add_argument("--cluster-doc2vec",
     #                    help="Cluster input traces using doc2vec",
     #                    action="store_true", default=False)
 
-    parser.add_argument("--cluster-param", type=float,
-                        help="Cluster parameter",
-                        action="store", default=0.1)
+    #parser.add_argument("--cluster-param", type=float,
+    #                    help="Cluster parameter",
+    #                    action="store", default=0.1)
 
-    parser.add_argument("--cluster-cnn",
-                        help="Cluster input traces using a convolutional model",
+    #parser.add_argument(
+    #    "--cluster-cnn",
+    #    help="Cluster input traces using a convolutional model",
+    #    action="store_true",
+    #    default=False)
+
+    parser.add_argument("--train",
+                        help="Train a model using a random forest",
                         action="store_true", default=False)
 
-    parser.add_argument("--train-rf",
-                        help="Train a Random Forest using infile",
-                        action="store_true", default=False)
+    parser.add_argument("--vect", type=str,
+                        help="Which technique use to vectorize traces",
+                        action="store", default="bow")
 
-    #parser.add_argument("--train-lstm",
+
+    # parser.add_argument("--train-lstm",
     #                    help="Train a LSTM using infile (warning: very experimental and slow)",
     #                    action="store_true", default=False)
 
-    #parser.add_argument("--train-cnn",
+    # parser.add_argument("--train-cnn",
     #                    help="Train a CNN using infile",
     #                    action="store_true", default=False)
 
-    parser.add_argument("--n-samples", type=int,
-                        help="Select a number of samples from infile (train only)",
-                        action="store", default=None)
+    parser.add_argument(
+        "--n-samples",
+        type=int,
+        help="Select a number of samples from infile (train only)",
+        action="store",
+        default=None)
 
     parser.add_argument("--out-file",
                         help="File to output the results/model",
@@ -108,21 +128,24 @@ if __name__ == "__main__":
 
     options = parser.parse_args()
     in_file = options.infile
-    valid_file = options.valid
+    vector_type = options.vect
+
+    #valid_file = options.valid
 
     test_simple = options.test
     test_aggr = options.test_aggr
 
-    training_mode_rf = options.train_rf
+    #training_mode_rf = options.train
     #training_mode_lstm = options.train_lstm
     #training_mode_cnn = options.train_cnn
 
-    training_mode_cluster_repr = options.cluster_with_repr
+    #training_mode_cluster_repr = options.cluster_with_repr
 
-    cluster_rdim = options.cluster_with_rdim
-    cluster_param = options.cluster_param
+    #cluster_rdim = options.cluster_with_rdim
+    #cluster_param = options.cluster_param
 
-    training_mode = training_mode_rf or training_mode_cluster_repr #training_mode_cluster_bow or training_mode_cluster_cnn or training_mode_cluster_doc2vec
+    # training_mode_cluster_bow or training_mode_cluster_cnn or training_mode_cluster_doc2vec
+    training_mode = options.train #training_mode_rf or training_mode_cluster_repr
 
     probability_mode = options.prob
     nsamples = options.n_samples
@@ -133,25 +156,27 @@ if __name__ == "__main__":
     out_file = options.out_file
     model_file = options.model
 
-    if (not static_only and not dynamic_only) or (static_only and dynamic_only):
-      print "VDiscover requires to select either static of dynamic features exclusively"
-      exit(-1)
+    if (not static_only and not dynamic_only) or (
+            static_only and dynamic_only):
+        print "VDiscover requires to select either static of dynamic features exclusively"
+        exit(-1)
     elif static_only:
-      ftype = "static"
+        features_type = "static"
     elif dynamic_only:
-      ftype = "dynamic"
+        features_type = "dynamic"
 
     if training_mode:
-      if training_mode_rf:
-        Train(out_file, in_file, valid_file, "rf", ftype, nsamples)
+        model_type = "rf"
+        Train(out_file, in_file, None, model_type, vector_type, features_type, nsamples)
 
-      elif training_mode_cluster_repr:
-        cluster_repr = training_mode_cluster_repr
-        from vdiscover.Cluster  import ClusterScikit
+        #elif training_mode_cluster_repr:
+        #    cluster_repr = training_mode_cluster_repr
+        #    from vdiscover.Cluster import ClusterScikit
+        #
+        #    ClusterScikit(None, in_file, valid_file, ftype, nsamples,
+        #                  cluster_repr, cluster_rdim, cluster_param)
 
-        ClusterScikit(None, in_file, valid_file, ftype, nsamples, cluster_repr, cluster_rdim, cluster_param)
-
-      """
+        """
       elif training_mode_cluster_cnn:
 
         if (model_file is None):
@@ -165,14 +190,15 @@ if __name__ == "__main__":
       """
 
     else:
-      if model_file is None:
-        print "VDiscover requires a pre-trained model to predict"
-        exit(-1)
+        if model_file is None:
+            print "VDiscover requires a pre-trained model to predict"
+            exit(-1)
 
-      test_mode = None
-      if test_simple:
-        test_mode = "simple"
-      elif test_aggr:
-        test_mode = "aggregated"
+        test_mode = None
+        if test_simple:
+            test_mode = "simple"
+        elif test_aggr:
+            test_mode = "aggregated"
 
-      Recall(model_file, in_file, ftype, out_file, test_mode, probability=probability_mode)
+        Recall(model_file, in_file, features_type, out_file,
+               test_mode, probability=probability_mode)

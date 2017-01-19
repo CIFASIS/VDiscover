@@ -20,22 +20,23 @@ Copyright 2014 by G.Grieco
 import random
 import copy
 
+
 def cluster_sampler(clustered_traces, n_per_cluster):
-  #cc = copy.copy(clusters)
-  #n_per_cluster = 1#n / len(cc)
-  clusters = dict()
-  for label, cluster in clustered_traces:
-    clusters[cluster] = clusters.get(cluster, []) + [label.split(":")[-1]]
+    #cc = copy.copy(clusters)
+    # n_per_cluster = 1#n / len(cc)
+    clusters = dict()
+    for label, cluster in clustered_traces:
+        clusters[cluster] = clusters.get(cluster, []) + [label.split(":")[-1]]
 
-  selected = set()
-  tmp = set()
+    selected = set()
+    tmp = set()
 
-  for (cluster, seeds) in clusters.items():
-    n_sample = min(len(seeds), n_per_cluster)
-    tmp = set(seeds).intersection(selected)
-    if len(tmp) >= n_sample: 
-      selected.update(set(random.sample(tmp, n_sample)))
-    else:
-      selected.update(set(random.sample(seeds, n_sample)))
+    for (cluster, seeds) in clusters.items():
+        n_sample = min(len(seeds), n_per_cluster)
+        tmp = set(seeds).intersection(selected)
+        if len(tmp) >= n_sample:
+            selected.update(set(random.sample(tmp, n_sample)))
+        else:
+            selected.update(set(random.sample(seeds, n_sample)))
 
-  return selected
+    return selected

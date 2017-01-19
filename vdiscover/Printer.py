@@ -21,83 +21,85 @@ import sys
 import csv
 import copy
 
-from Event    import Call, Crash, Abort, Exit, Timeout, Signal, Vulnerability, specs
-from Types    import ptypes, isPtr, isNum, ptr32_ptypes, num32_ptypes, generic_ptypes
+from Event import Call, Crash, Abort, Exit, Timeout, Signal, Vulnerability, specs
+from Types import ptypes, isPtr, isNum, ptr32_ptypes, num32_ptypes, generic_ptypes
+
 
 class TypePrinter:
-  def __init__(self, filename, pname, mclass):
-    self.tests = set()
-    self.outfile = open(filename, "a+")
-    self.pname = pname
-    self.mclass = mclass
-    self.csvwriter = csv.writer(self.outfile, delimiter='\t')
 
-  def preprocess(self, event):
+    def __init__(self, filename, pname, mclass):
+        self.tests = set()
+        self.outfile = open(filename, "a+")
+        self.pname = pname
+        self.mclass = mclass
+        self.csvwriter = csv.writer(self.outfile, delimiter='\t')
 
-    r = list()
+    def preprocess(self, event):
 
-    if isinstance(event, Call):
-      (name, args) = event.GetTypedName()
+        r = list()
 
-      for (index, arg) in enumerate(args[:]):
-        r.append((name+":"+str(index),str(arg)))
+        if isinstance(event, Call):
+            (name, args) = event.GetTypedName()
 
-    elif isinstance(event, Abort):
-      (name, fields) = event.GetTypedName()
-      r.append((name+":eip",str(fields[0])))
+            for (index, arg) in enumerate(args[:]):
+                r.append((name + ":" + str(index), str(arg)))
 
-    elif isinstance(event, Exit):
-      (name, fields) = event.GetTypedName()
-      r.append((name,str(())))
+        elif isinstance(event, Abort):
+            (name, fields) = event.GetTypedName()
+            r.append((name + ":eip", str(fields[0])))
 
-    elif isinstance(event, Crash):
-      (name, fields) = event.GetTypedName()
-      r.append((name+":eip",str(fields[0])))
+        elif isinstance(event, Exit):
+            (name, fields) = event.GetTypedName()
+            r.append((name, str(())))
 
-    elif isinstance(event, Vulnerability):
-      (name, fields) = event.GetTypedName()
-      r.append((name,str(fields[0])))
+        elif isinstance(event, Crash):
+            (name, fields) = event.GetTypedName()
+            r.append((name + ":eip", str(fields[0])))
 
-    elif isinstance(event, Timeout):
-      (name, fields) = event.GetTypedName()
-      r.append((name,str(())))
+        elif isinstance(event, Vulnerability):
+            (name, fields) = event.GetTypedName()
+            r.append((name, str(fields[0])))
 
-    elif isinstance(event, Signal):
-      (name, fields) = event.GetTypedName()
+        elif isinstance(event, Timeout):
+            (name, fields) = event.GetTypedName()
+            r.append((name, str(())))
 
-      if name == "SIGSEGV":
-        r.append((name+":addr",str(fields[0])))
-      else:
-        r.append((name,str(fields[0])))
+        elif isinstance(event, Signal):
+            (name, fields) = event.GetTypedName()
 
-    return r
+            if name == "SIGSEGV":
+                r.append((name + ":addr", str(fields[0])))
+            else:
+                r.append((name, str(fields[0])))
 
-  def print_events(self, label, events):
+        return r
 
-    r = list()
+    def print_events(self, label, events):
 
-    for event in events:
-      r = r + list(self.preprocess(event))
+        r = list()
 
-    events = r
+        for event in events:
+            r = r + list(self.preprocess(event))
 
-    #x = hash(tuple(events))
+        events = r
 
-    #if (x in self.tests):
-    #  return
+        #x = hash(tuple(events))
 
-    #self.tests.add(x)
+        # if (x in self.tests):
+        #  return
 
-    trace = ""
+        # self.tests.add(x)
 
-    for x,y in events:
-      trace = trace + ("%s=%s " % (x,y))
+        trace = ""
 
-    row = [self.pname+":"+label,trace]
+        for x, y in events:
+            trace = trace + ("%s=%s " % (x, y))
 
-    if self.mclass is not None:
-      row.append(self.mclass)
+        row = [self.pname + ":" + label, trace]
 
-    self.csvwriter.writerow(row)
-    self.outfile.flush()
-    return row
+        if self.mclass is not None:
+            row.append(self.mclass)
+
+        self.csvwriter.writerow(row)
+        self.outfile.flush()
+        return row

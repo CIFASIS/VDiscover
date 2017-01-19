@@ -27,26 +27,36 @@ import random
 
 from subprocess import Popen, PIPE, STDOUT
 
-from vdiscover.Detection  import GetArgs, GetFiles, GetCmd
-from vdiscover.Mutation   import NullMutator, RandomByteMutator, RandomExpanderMutator, RandomInputMutator, opened_files
-from vdiscover.Input      import prepare_inputs
+from vdiscover.Detection import GetArgs, GetFiles, GetCmd
+from vdiscover.Mutation import NullMutator, RandomByteMutator, RandomExpanderMutator, RandomInputMutator, opened_files
+from vdiscover.Input import prepare_inputs
 
 
 if __name__ == "__main__":
 
     # To help argparse to detect the number of columns correctly
-    #os.environ['COLUMNS'] = str(os.popen('stty size', 'r').read().split()[1]) #str(shutil.get_terminal_size().columns)
+    # os.environ['COLUMNS'] = str(os.popen('stty size',
+    # 'r').read().split()[1]) #str(shutil.get_terminal_size().columns)
 
     # Arguments
-    parser = argparse.ArgumentParser(description='Vulnerability Detection Procedure')
-    parser.add_argument("testcase", help="Testcase to analyze", type=str, default=None)
-    parser.add_argument("cmd", help="Testcase to analyze", type=str, default=None)
+    parser = argparse.ArgumentParser(
+        description='Vulnerability Detection Procedure')
+    parser.add_argument(
+        "testcase", help="Testcase to analyze", type=str, default=None)
+    parser.add_argument("cmd", help="Testcase to analyze",
+                        type=str, default=None)
 
-    parser.add_argument("--io-mode",
-                        help="Input-Output mode", action="store_true", default=False)
+    parser.add_argument(
+        "--io-mode",
+        help="Input-Output mode",
+        action="store_true",
+        default=False)
 
-    parser.add_argument("--seed-range", type=str,
-                        help="A seed range to feed the cmd (io mode only)", default="0:0")
+    parser.add_argument(
+        "--seed-range",
+        type=str,
+        help="A seed range to feed the cmd (io mode only)",
+        default="0:0")
 
     parser.add_argument("--show-stdout",
                         help="Don't use /dev/null as stdout/stderr",
@@ -59,10 +69,9 @@ if __name__ == "__main__":
     parser.add_argument("--timeout", dest="timeout", type=int,
                         help="Timeout in seconds (io mode only)", default=3)
 
-
     options = parser.parse_args()
 
-    start_seed,stop_seed = tuple(options.seed_range.split(":"))
+    start_seed, stop_seed = tuple(options.seed_range.split(":"))
     testcase = options.testcase
     vdp_cmd = options.cmd
     show_stdout = options.show_stdout
@@ -84,33 +93,42 @@ if __name__ == "__main__":
     prepared_inputs = prepare_inputs(original_input)
 
     if show_cmd:
-      print vdp_cmd,program," ".join(prepared_inputs)
-      exit(0)
+        print vdp_cmd, program, " ".join(prepared_inputs)
+        exit(0)
 
     if io_mode:
 
-      DEVNULL = open(os.devnull, 'wb')
-      in_filename = files[0].GetName()
-      out_filename = files[0].GetFilename()
-      vdp_cmd = vdp_cmd.replace("<input>", in_filename)
-      vdp_cmd = vdp_cmd.replace("<output>", out_filename)
+        DEVNULL = open(os.devnull, 'wb')
+        in_filename = files[0].GetName()
+        out_filename = files[0].GetFilename()
+        vdp_cmd = vdp_cmd.replace("<input>", in_filename)
+        vdp_cmd = vdp_cmd.replace("<output>", out_filename)
 
-      for seed in xrange(int(start_seed),int(stop_seed)):
-        cmd = vdp_cmd.replace("<seed>",str(seed))
-        p = Popen(cmd.split(" "), stdin=PIPE, stdout=DEVNULL, stderr=DEVNULL, env=dict())
-        p.communicate()
-        p = Popen(["timeout","-k","1",str(timeout),program]+prepared_inputs, stdin=PIPE, stdout=DEVNULL, stderr=DEVNULL, env=dict())
-        p.communicate()
+        for seed in xrange(int(start_seed), int(stop_seed)):
+            cmd = vdp_cmd.replace("<seed>", str(seed))
+            p = Popen(cmd.split(" "), stdin=PIPE,
+                      stdout=DEVNULL, stderr=DEVNULL, env=dict())
+            p.communicate()
+            p = Popen(["timeout",
+                       "-k",
+                       "1",
+                       str(timeout),
+                       program] + prepared_inputs,
+                      stdin=PIPE,
+                      stdout=DEVNULL,
+                      stderr=DEVNULL,
+                      env=dict())
+            p.communicate()
 
-        if p.returncode < 0:
-          print >> sys.stderr, testcase, p.returncode, seed
-          exit(1)
+            if p.returncode < 0:
+                print >> sys.stderr, testcase, p.returncode, seed
+                exit(1)
 
-      exit(0)
+        exit(0)
 
     else:
-      p = Popen(vdp_cmd.split(" ")+[program]+prepared_inputs, stdin=PIPE, env=dict())
-      p.communicate()
+        p = Popen(vdp_cmd.split(" ") + [program] +
+                  prepared_inputs, stdin=PIPE, env=dict())
+        p.communicate()
 
     exit(p.returncode)
-     

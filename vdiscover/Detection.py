@@ -23,122 +23,126 @@ import shutil
 
 from Input import Arg, File
 
+
 def GetCmd(s):
 
-  if os.path.exists("path.txt"):
-    f = open("path.txt")
-    x = f.readline()
-    return x.replace("\n","").strip(" ")
-  else:
-    return s
+    if os.path.exists("path.txt"):
+        f = open("path.txt")
+        x = f.readline()
+        return x.replace("\n", "").strip(" ")
+    else:
+        return s
+
 
 def GetArg(n, conc):
 
-  if conc:
-    filename = "cargv_"+str(n)+".symb"
-    data = open(filename).read()
-    x = Arg(n, data)
-    x.SetConcrete()
-  else:
-    filename = "argv_"+str(n)+".symb"
-    data = open(filename).read()
-    x = Arg(n, data)
-    x.SetSymbolic()
+    if conc:
+        filename = "cargv_" + str(n) + ".symb"
+        data = open(filename).read()
+        x = Arg(n, data)
+        x.SetConcrete()
+    else:
+        filename = "argv_" + str(n) + ".symb"
+        data = open(filename).read()
+        x = Arg(n, data)
+        x.SetSymbolic()
 
-  return x
+    return x
+
 
 def WriteTestcase(name, program, args, copy=False):
-  try:
-    os.mkdir(name)
-  except:
-    pass
+    try:
+        os.mkdir(name)
+    except:
+        pass
 
-  os.chdir(name)
-  filename = "path.txt"
-  open(filename,"w").write(program)
-  
-  try:
-    os.mkdir("inputs")
-  except:
-    pass
+    os.chdir(name)
+    filename = "path.txt"
+    open(filename, "w").write(program)
 
-  os.chdir("inputs")
-  for i,arg in enumerate(args):
-    if "file:" in arg:
-      #print arg
-      arg = arg.replace("file:","")
-      assert(arg[0] == '/')
-      filename = os.path.split(arg)[-1]
-      #print filename
-      if copy:
-        shutil.copyfile(os.path.realpath(arg),  "file_"+filename)
-      else:
-        os.symlink(os.path.realpath(arg), "file_"+filename)
-      arg = filename
+    try:
+        os.mkdir("inputs")
+    except:
+        pass
 
-    filename = "argv_"+str(i+1)+".symb"
-    open(filename,"w").write(arg)
+    os.chdir("inputs")
+    for i, arg in enumerate(args):
+        if "file:" in arg:
+            # print arg
+            arg = arg.replace("file:", "")
+            assert(arg[0] == '/')
+            filename = os.path.split(arg)[-1]
+            # print filename
+            if copy:
+                shutil.copyfile(os.path.realpath(arg), "file_" + filename)
+            else:
+                os.symlink(os.path.realpath(arg), "file_" + filename)
+            arg = filename
 
-  os.chdir("../..")
-   
+        filename = "argv_" + str(i + 1) + ".symb"
+        open(filename, "w").write(arg)
+
+    os.chdir("../..")
+
 
 def GetArgs():
-  #i = 1
-  r = []
+    #i = 1
+    r = []
 
-  for _,_,files in os.walk('.'):
-    for f in files:
-      #print f
-      for i in range(10):
-        #print str(i), f
+    for _, _, files in os.walk('.'):
+        for f in files:
+            # print f
+            for i in range(10):
+                # print str(i), f
 
-        if ("cargv_"+str(i)) in f:
-          x = GetArg(i, True)
-          if x.IsValid():
-            r.append(x)
+                if ("cargv_" + str(i)) in f:
+                    x = GetArg(i, True)
+                    if x.IsValid():
+                        r.append(x)
 
-          break
+                    break
 
-        elif ("argv_"+str(i)) in f:
-          x = GetArg(i, False)
-          if x.IsValid():
-            r.append(x)
+                elif ("argv_" + str(i)) in f:
+                    x = GetArg(i, False)
+                    if x.IsValid():
+                        r.append(x)
 
-          break
+                    break
 
-  r.sort()
-  #print r
-  for i in range(len(r)):
-    if r[i].i <> i+1:
-      r = r[0:i]
-      break
+    r.sort()
+    # print r
+    for i in range(len(r)):
+        if r[i].i != i + 1:
+            r = r[0:i]
+            break
 
-  #print r
-  return r
+    # print r
+    return r
+
 
 def GetFile(filename, source):
-  #size = int(os.path.getsize(source))
-  data = open(source).read()
-  return File(filename, data)
+    #size = int(os.path.getsize(source))
+    data = open(source).read()
+    return File(filename, data)
+
 
 def GetFiles():
 
-  r = []
-  stdinf = "file___dev__stdin.symb"
+    r = []
+    stdinf = "file___dev__stdin.symb"
 
-  for dir,_,files in os.walk('.'):
-    if dir == '.':
-      for f in files:
-        if (stdinf == f):
-          r.append(GetFile("/dev/stdin",stdinf))
-        elif ("file_" in f):
-          filename = f.split(".symb")[0]
-          #filename = f.replace(".symb","")
-          filename = filename.split("file_")[1]
-          filename = filename.replace(".__", "")
-          x = GetFile(filename,f)
-          if x.IsValid():
-            r.append(x)
+    for dir, _, files in os.walk('.'):
+        if dir == '.':
+            for f in files:
+                if (stdinf == f):
+                    r.append(GetFile("/dev/stdin", stdinf))
+                elif ("file_" in f):
+                    filename = f.split(".symb")[0]
+                    #filename = f.replace(".symb","")
+                    filename = filename.split("file_")[1]
+                    filename = filename.replace(".__", "")
+                    x = GetFile(filename, f)
+                    if x.IsValid():
+                        r.append(x)
 
-  return r
-
+    return r

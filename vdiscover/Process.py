@@ -19,14 +19,18 @@ Copyright 2014 by G.Grieco
 
 from ptrace import PtraceError
 from ptrace.debugger import (PtraceDebugger, Application,
-    ProcessExit, NewProcessEvent, ProcessSignal,
-    ProcessExecution, ProcessError)
+                             ProcessExit, NewProcessEvent, ProcessSignal,
+                             ProcessExecution, ProcessError)
 
 from logging import getLogger, info, warning, error
 from ptrace.error import PTRACE_ERRORS, PtraceError, writeError
 from ptrace.disasm import HAS_DISASSEMBLER
-from ptrace.ctypes_tools import (truncateWord,
-    formatWordHex, formatAddress, formatAddressRange, word2bytes)
+from ptrace.ctypes_tools import (
+    truncateWord,
+    formatWordHex,
+    formatAddress,
+    formatAddressRange,
+    word2bytes)
 
 from ptrace.signames import signalName, SIGNAMES
 from signal import SIGTRAP, SIGALRM, SIGABRT, SIGSEGV, SIGILL, SIGCHLD, SIGWINCH, SIGFPE, SIGBUS, SIGTERM, SIGPIPE, signal, alarm
@@ -44,8 +48,19 @@ from Run import Launch
 from MemoryMap import MemoryMaps
 from Alarm import alarm_handler, TimeoutEx
 
+
 class Process(Application):
-    def __init__(self, program, envs, timeout, included_mods = [], ignored_mods = [], no_stdout = True, max_events = 320, min_events = -10*320):
+
+    def __init__(
+            self,
+            program,
+            envs,
+            timeout,
+            included_mods=[],
+            ignored_mods=[],
+            no_stdout=True,
+            max_events=320,
+            min_events=-10 * 320):
 
         Application.__init__(self)  # no effect
 
@@ -67,9 +82,9 @@ class Process(Application):
         self.min_events = min_events
 
         # Parse ELF
-        self.elf = ELF(self.program, plt = False)
+        self.elf = ELF(self.program, plt=False)
 
-        #if self.elf.GetType() <> "ELF 32-bit":
+        # if self.elf.GetType() <> "ELF 32-bit":
         #  print "Only ELF 32-bit are supported to be executed."
         #  exit(-1)
 
@@ -84,150 +99,161 @@ class Process(Application):
         self.binfo = dict()
 
     def setBreakpoints(self, elf):
-      #print elf.GetFunctions()
-      for func_name in elf.GetFunctions():
-        #print "func_name", elf.GetModname(), hex(elf.FindFuncInPlt(func_name))
+        # print elf.GetFunctions()
+        for func_name in elf.GetFunctions():
+            # print "func_name", elf.GetModname(),
+            # hex(elf.FindFuncInPlt(func_name))
 
-        if func_name in specs:
-          #print "func_name in spec",elf.GetModname(), func_name, hex(elf.FindFuncInPlt(func_name))
-          addr = elf.FindFuncInPlt(func_name)
-          self.binfo[addr] = elf.GetModname(),func_name
-          self.breakpoint(addr)
+            if func_name in specs:
+                # print "func_name in spec",elf.GetModname(), func_name,
+                # hex(elf.FindFuncInPlt(func_name))
+                addr = elf.FindFuncInPlt(func_name)
+                self.binfo[addr] = elf.GetModname(), func_name
+                self.breakpoint(addr)
 
     def findBreakpointInfo(self, addr):
-      if addr in self.binfo:
-        return self.binfo[addr]
-      else:
-        return None, None
+        if addr in self.binfo:
+            return self.binfo[addr]
+        else:
+            return None, None
 
     def createEvents(self, signal):
-        # Hit breakpoint?
+            # Hit breakpoint?
         if signal.signum == SIGTRAP:
             ip = self.process.getInstrPointer()
             if not CPU_POWERPC:
                 # Go before "INT 3" instruction
                 ip -= 1
             breakpoint = self.process.findBreakpoint(ip)
-            #print "breakpoint @",hex(ip)
+            # print "breakpoint @",hex(ip)
 
             if breakpoint:
                 module, name = self.findBreakpointInfo(breakpoint.address)
-                #print module, name, hex(ip)
+                # print module, name, hex(ip)
 
                 if ip == self.elf.GetEntrypoint():
-                  breakpoint.desinstall(set_ip=True)
+                    breakpoint.desinstall(set_ip=True)
 
-                  #if self.mm is None:
-                  self.mm  = MemoryMaps(self.program, self.pid)
-                  #self.setBreakpoints(self.elf)
+                    # if self.mm is None:
+                    self.mm = MemoryMaps(self.program, self.pid)
+                    # self.setBreakpoints(self.elf)
 
-                  #print self.mm
+                    # print self.mm
 
-                  for (range, mod, atts) in self.mm.items():
-                     if '/' in mod and 'x' in atts and not ("libc-" in mod):
+                    for (range, mod, atts) in self.mm.items():
+                        if '/' in mod and 'x' in atts and not ("libc-" in mod):
 
-                        # FIXME: self.elf.path should be absolute
-                        if mod == self.elf.path:
-                           base = 0
-                        else:
-                           base = range[0]
+                            # FIXME: self.elf.path should be absolute
+                            if mod == self.elf.path:
+                                base = 0
+                            else:
+                                base = range[0]
 
-                        if self.included_mods == [] or any(map(lambda l: l in mod, self.included_mods)):
-                          if self.ignored_mods == [] or not (any(map(lambda l: l in mod, self.ignored_mods))):
+                            if self.included_mods == [] or any(
+                                    map(lambda l: l in mod, self.included_mods)):
+                                if self.ignored_mods == [] or not (
+                                        any(map(lambda l: l in mod, self.ignored_mods))):
 
-                            if not (mod in self.modules):
-                              self.modules[mod] = ELF(mod, base = base)
-                            #print "hooking", mod, hex(base)
+                                    if not (mod in self.modules):
+                                        self.modules[mod] = ELF(mod, base=base)
+                                    # print "hooking", mod, hex(base)
 
-                            self.setBreakpoints(self.modules[mod])
+                                    self.setBreakpoints(self.modules[mod])
 
-
-                  return []
+                    return []
 
                 elif name is None:
-                  assert(0)
+                    assert(0)
 
                 else:
-                  call = Call(name, module)
-                  #self.mm.update()
-                  #print "updated mm"
-                  call.detect_parameters(self.process, self.mm)
-                  breakpoint.desinstall(set_ip=True)
+                    call = Call(name, module)
+                    # self.mm.update()
+                    # print "updated mm"
+                    call.detect_parameters(self.process, self.mm)
+                    breakpoint.desinstall(set_ip=True)
 
-                  call_ip = ip
-                  self.process.singleStep()
-                  self.debugger.waitProcessEvent()
+                    call_ip = ip
+                    self.process.singleStep()
+                    self.debugger.waitProcessEvent()
 
-                  n = self.nevents.get((ip,name), 0)
-                  self.nevents[(ip, name)] = n + 2
- 
-                  for ((ip_,name_),n) in self.nevents.items():
+                    n = self.nevents.get((ip, name), 0)
+                    self.nevents[(ip, name)] = n + 2
 
-                    if n > self.min_events + 1:
-                      self.nevents[(ip_, name_)] = n - 1
-                    elif n == self.min_events + 1:
-                       self.nevents[(ip_, name_)] = self.min_events
-                       #print "restoring!", (ip, name)
-                       self.breakpoint(call_ip)
+                    for ((ip_, name_), n) in self.nevents.items():
 
-                  if n < self.max_events:
-                    self.breakpoint(call_ip)
-                  #else:
-                    #print "disabled!", (ip, name)
- 
-                  #print "call detected!"
-                  return [call]
+                        if n > self.min_events + 1:
+                            self.nevents[(ip_, name_)] = n - 1
+                        elif n == self.min_events + 1:
+                            self.nevents[(ip_, name_)] = self.min_events
+                            # print "restoring!", (ip, name)
+                            self.breakpoint(call_ip)
+
+                    if n < self.max_events:
+                        self.breakpoint(call_ip)
+                    # else:
+                        # print "disabled!", (ip, name)
+
+                    # print "call detected!"
+                    return [call]
 
         elif signal.signum == SIGABRT:
-          self.crashed = True
-          return [Signal("SIGABRT",self.process, self.mm), Abort(self.process, self.mm)]
+            self.crashed = True
+            return [
+                Signal(
+                    "SIGABRT", self.process, self.mm), Abort(
+                    self.process, self.mm)]
 
         elif signal.signum == SIGSEGV:
-          self.crashed = True
-          self.mm  = MemoryMaps(self.program, self.pid)
-          return [Signal("SIGSEGV", self.process, self.mm), Crash(self.process, self.mm)]
+            self.crashed = True
+            self.mm = MemoryMaps(self.program, self.pid)
+            return [
+                Signal(
+                    "SIGSEGV", self.process, self.mm), Crash(
+                    self.process, self.mm)]
 
         elif signal.signum == SIGILL:
-          #self.crashed = True
-          self.mm  = MemoryMaps(self.program, self.pid)
-          return [Signal("SIGILL", self.process, self.mm)]
+            #self.crashed = True
+            self.mm = MemoryMaps(self.program, self.pid)
+            return [Signal("SIGILL", self.process, self.mm)]
 
         elif signal.signum == SIGFPE:
-          self.crashed = True
-          self.mm  = MemoryMaps(self.program, self.pid)
-          return [Signal("SIGFPE", self.process, self.mm), Crash(self.process, self.mm)]
+            self.crashed = True
+            self.mm = MemoryMaps(self.program, self.pid)
+            return [
+                Signal(
+                    "SIGFPE", self.process, self.mm), Crash(
+                    self.process, self.mm)]
 
         elif signal.signum == SIGBUS:
-          #self.crashed = True
-          self.mm  = MemoryMaps(self.program, self.pid)
-          return [Signal("SIGBUS", self.process, self.mm)]
+            #self.crashed = True
+            self.mm = MemoryMaps(self.program, self.pid)
+            return [Signal("SIGBUS", self.process, self.mm)]
 
         elif signal.signum == SIGCHLD:
-          #self.crashed = True
-          self.mm  = MemoryMaps(self.program, self.pid)
-          return [Signal("SIGCHLD", self.process, self.pid)]
+            #self.crashed = True
+            self.mm = MemoryMaps(self.program, self.pid)
+            return [Signal("SIGCHLD", self.process, self.pid)]
 
-        elif signal.signum == SIGTERM: # killed by the kernel?
-          self.crashed = True
-          return []
+        elif signal.signum == SIGTERM:  # killed by the kernel?
+            self.crashed = True
+            return []
 
         # Harmless signals
         elif signal.signum == SIGPIPE:
-          return [] # User generated, ignore.
+            return []  # User generated, ignore.
 
         # Harmless signals
         elif signal.signum == SIGWINCH:
-          return [] # User generated, ignore.
+            return []  # User generated, ignore.
 
         else:
-          print "I don't know what to do with this signal:", str(signal)
-          assert(False)
+            print "I don't know what to do with this signal:", str(signal)
+            assert(False)
 
         return []
 
     def DetectVulnerabilities(self, preevents, events):
-      return detect_vulnerabilities(preevents, events, self.process, self.mm)
-
+        return detect_vulnerabilities(preevents, events, self.process, self.mm)
 
     def createProcess(self, cmd, envs, no_stdout):
 
@@ -236,15 +262,17 @@ class Process(Application):
         is_attached = True
 
         try:
-            #print "initial processes:"
-            #for p in self.debugger:
+            # print "initial processes:"
+            # for p in self.debugger:
             #  print "p:", p
-            #print "end processes"
+            # print "end processes"
             return self.debugger.addProcess(self.pid, is_attached=is_attached)
-        except (ProcessExit, PtraceError), err:
+        except (ProcessExit, PtraceError) as err:
             if isinstance(err, PtraceError) \
-            and err.errno == EPERM:
-                error("ERROR: You are not allowed to trace process %s (permission denied or process already traced)" % self.pid)
+                    and err.errno == EPERM:
+                error(
+                    "ERROR: You are not allowed to trace process %s (permission denied or process already traced)" %
+                    self.pid)
             else:
                 error("ERROR: Process can no be attached! %s" % err)
         return None
@@ -279,12 +307,11 @@ class Process(Application):
         signal = self.debugger.waitSignals()
         process = signal.process
         events = self.createEvents(signal)
-        
-        #vulns = self.DetectVulnerabilities(self.events, events)
-        #print "vulns detected"
-        self.events = self.events + events #+ vulns
-        #self.nevents = self.nevents + len(events)
 
+        #vulns = self.DetectVulnerabilities(self.events, events)
+        # print "vulns detected"
+        self.events = self.events + events  # + vulns
+        #self.nevents = self.nevents + len(events)
 
     def readInstrSize(self, address, default_size=None):
         if not HAS_DISASSEMBLER:
@@ -293,7 +320,7 @@ class Process(Application):
             # Get address and size of instruction at specified address
             instr = self.process.disassembleOne(address)
             return instr.size
-        except PtraceError, err:
+        except PtraceError as err:
             warning("Warning: Unable to read instruction size at %s: %s" % (
                 formatAddress(address), err))
             return default_size
@@ -304,7 +331,7 @@ class Process(Application):
         size = self.readInstrSize(address)
         try:
             bp = self.process.createBreakpoint(address, size)
-        except PtraceError, err:
+        except PtraceError as err:
             return "Unable to set breakpoint at %s: %s" % (
                 formatAddress(address), err)
         #error("New breakpoint: %s" % bp)
@@ -312,14 +339,14 @@ class Process(Application):
 
     def runProcess(self, cmd):
 
-        #print "Running", cmd
+        # print "Running", cmd
 
         signal(SIGALRM, alarm_handler)
 
-        #if self.pid is None:
+        # if self.pid is None:
         #  timeout = 20*self.timeout
-        #else:
-        timeout = 10*self.timeout
+        # else:
+        timeout = 10 * self.timeout
 
         alarm(timeout)
 
@@ -328,18 +355,18 @@ class Process(Application):
             self.process = self.createProcess(cmd, self.envs, self.no_stdout)
             self.process.no_frame_pointer = self.elf.no_frame_pointer
             #self.mm  = MemoryMaps(self.program, self.pid)
-            #print self.mm
+            # print self.mm
             self.crashed = False
-        except ChildError, err:
+        except ChildError as err:
             print "a"
             writeError(getLogger(), err, "Unable to create child process")
             return
-        except OSError, err:
+        except OSError as err:
             print "b"
             writeError(getLogger(), err, "Unable to create child process")
             return
 
-        except IOError, err:
+        except IOError as err:
             print "c"
             writeError(getLogger(), err, "Unable to create child process")
             return
@@ -347,75 +374,72 @@ class Process(Application):
         if not self.process:
             return
 
-
         # Set the breakpoints
         self.breakpoint(self.elf.GetEntrypoint())
-        #print hex(self.elf.GetEntrypoint())
+        # print hex(self.elf.GetEntrypoint())
 
         try:
-          while True:
+            while True:
 
-            #self.cont() 
-            #if self.nevents > self.max_events:
-            #
-            #    self.events.append(Timeout(timeout))
-            #    alarm(0)
-            #    return
-            if not self.debugger or self.crashed:
-                # There is no more process: quit
-                alarm(0)
-                return
-            else:
-              self.cont()
+                # self.cont()
+                # if self.nevents > self.max_events:
+                #
+                #    self.events.append(Timeout(timeout))
+                #    alarm(0)
+                #    return
+                if not self.debugger or self.crashed:
+                    # There is no more process: quit
+                    alarm(0)
+                    return
+                else:
+                    self.cont()
 
-          #alarm(0)
-        #except PtraceError:
-          #print "deb:",self.debugger, "crash:", self.crashed
-          #print "PtraceError"
-          #alarm(0)
-          #return        
+            # alarm(0)
+        # except PtraceError:
+            # print "deb:",self.debugger, "crash:", self.crashed
+            # print "PtraceError"
+            # alarm(0)
+            # return
 
-        except ProcessExit, event:
-          alarm(0)
-          self.events.append(Exit(event.exitcode))
-          return
+        except ProcessExit as event:
+            alarm(0)
+            self.events.append(Exit(event.exitcode))
+            return
 
         except OSError:
-          alarm(0)
-          self.events.append(Timeout(timeout))
-          self.timeouts += 1
-          return
+            alarm(0)
+            self.events.append(Timeout(timeout))
+            self.timeouts += 1
+            return
 
         except IOError:
-          alarm(0)
-          self.events.append(Timeout(timeout))
-          self.timeouts += 1
-          return
+            alarm(0)
+            self.events.append(Timeout(timeout))
+            self.timeouts += 1
+            return
 
         except TimeoutEx:
-          self.events.append(Timeout(timeout))
-          return
-
-
+            self.events.append(Timeout(timeout))
+            return
 
     def getData(self, inputs):
         self.events = []
         self.nevents = dict()
         self.debugger = PtraceDebugger()
 
-        self.runProcess([self.program]+inputs)
-        #print self.pid
+        self.runProcess([self.program] + inputs)
+        # print self.pid
 
-        #if self.crashed:
+        # if self.crashed:
         #  print "we should terminate.."
-        #sleep(3)
+        # sleep(3)
 
         if self.process is None:
-          return None
+            return None
 
         self.process.terminate()
         self.process.detach()
-        #print self.nevents
+        # print self.nevents
 
         self.process = None
         return self.events

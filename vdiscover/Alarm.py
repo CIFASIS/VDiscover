@@ -19,10 +19,10 @@ Copyright 2014 by G.Grieco
 
 import signal
 
+
 class TimeoutEx(Exception):
-  pass
+    pass
+
 
 def alarm_handler(signum, frame):
-  raise TimeoutEx
-
-
+    raise TimeoutEx

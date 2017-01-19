@@ -27,14 +27,14 @@ import numpy as np
 import matplotlib as mpl
 
 # hack from https://stackoverflow.com/questions/2801882/generating-a-png-with-matplotlib-when-display-is-undefined to avoid using X
-#mpl.use('Agg')
+# mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 from Utils import *
 from Pipeline import *
 
 
-#def Cluster(X, labels)
+# def Cluster(X, labels)
 """
   assert(len(X_red) == len(labels))
 
@@ -63,8 +63,7 @@ from Pipeline import *
 
   plt.title('Estimated number of clusters: %d' % n_clusters)
 """
-#return zip(labels, cluster_labels)
-
+# return zip(labels, cluster_labels)
 
 
 batch_size = 25
@@ -77,54 +76,67 @@ filter_length = 3
 hidden_dims = 50
 nb_epoch = 3
 
+
 def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
-  f = open(model_file+".pre")
-  preprocessor = pickle.load(f)
+    f = open(model_file + ".pre")
+    preprocessor = pickle.load(f)
 
-  import h5py
-  f = h5py.File(model_file+".wei")
+    import h5py
+    f = h5py.File(model_file + ".wei")
 
-  layers = []
-  for k in range(f.attrs['nb_layers']):
-            g = f['layer_{}'.format(k)]
-            layers.append([g['param_{}'.format(p)] for p in range(g.attrs['nb_params'])])
+    layers = []
+    for k in range(f.attrs['nb_layers']):
+        g = f['layer_{}'.format(k)]
+        layers.append([g['param_{}'.format(p)]
+                       for p in range(g.attrs['nb_params'])])
 
-  max_features = len(preprocessor.tokenizer.word_counts)
+    max_features = len(preprocessor.tokenizer.word_counts)
 
-  print "Reading and sampling data to train.."
-  train_programs, train_features, train_classes = read_traces(train_file, nsamples, cut=None)
-  train_size = len(train_features)
+    print "Reading and sampling data to train.."
+    train_programs, train_features, train_classes = read_traces(
+        train_file, nsamples, cut=None)
+    train_size = len(train_features)
 
-  #y = train_programs
-  X_train, y_train, labels = preprocessor.preprocess_traces(train_features, y_data=train_classes, labels=train_programs)
-  new_model = make_cluster_cnn("test", max_features, maxlen, embedding_dims, nb_filters, filter_length, hidden_dims, None, weights=layers)
+    #y = train_programs
+    X_train, y_train, labels = preprocessor.preprocess_traces(
+        train_features, y_data=train_classes, labels=train_programs)
+    new_model = make_cluster_cnn(
+        "test",
+        max_features,
+        maxlen,
+        embedding_dims,
+        nb_filters,
+        filter_length,
+        hidden_dims,
+        None,
+        weights=layers)
 
-  train_dict = dict()
-  train_dict[ftype] = new_model.predict(X_train)
+    train_dict = dict()
+    train_dict[ftype] = new_model.predict(X_train)
 
-  model = make_cluster_pipeline_subtraces(ftype)
-  X_red_comp = model.fit_transform(train_dict)
-  explained_var = np.var(X_red_comp, axis=0)
-  print explained_var
+    model = make_cluster_pipeline_subtraces(ftype)
+    X_red_comp = model.fit_transform(train_dict)
+    explained_var = np.var(X_red_comp, axis=0)
+    print explained_var
 
-  X_red = X_red_comp[:,0:2]
-  X_red_next = X_red_comp[:,2:4]
+    X_red = X_red_comp[:, 0:2]
+    X_red_next = X_red_comp[:, 2:4]
 
-  colors = mpl.colors.cnames.keys()
-  progs = list(set(labels))
-  ncolors = len(colors)
-  size = len(labels)
-  print "Plotting.."
- 
-  for prog,[x,y] in zip(labels, X_red):
-  #for prog,[x,y] in sample(zip(labels, X_red), min(size, 1000)):
-    x = gauss(0,0.05) + x
-    y = gauss(0,0.05) + y
-    color = 'r'
-    plt.scatter(x, y, c=color )
+    colors = mpl.colors.cnames.keys()
+    progs = list(set(labels))
+    ncolors = len(colors)
+    size = len(labels)
+    print "Plotting.."
 
-  """
+    for prog, [x, y] in zip(labels, X_red):
+        # for prog,[x,y] in sample(zip(labels, X_red), min(size, 1000)):
+        x = gauss(0, 0.05) + x
+        y = gauss(0, 0.05) + y
+        color = 'r'
+        plt.scatter(x, y, c=color)
+
+    """
   if valid_file is not None:
     valid_programs, valid_features, valid_classes = read_traces(valid_file, None, cut=None, maxsize=window_size) #None)
     valid_dict = dict()
@@ -141,46 +153,46 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
       y = gauss(0,0.05) + y
       plt.scatter(x, y, c='b')
       plt.text(x, y+0.02, prog.split("/")[-1])
-  
+
   plt.show()
   """
-  plt.savefig(train_file.replace(".gz","")+".png")
-  print "Bandwidth estimation.."
-  from sklearn.cluster import MeanShift, estimate_bandwidth
+    plt.savefig(train_file.replace(".gz", "") + ".png")
+    print "Bandwidth estimation.."
+    from sklearn.cluster import MeanShift, estimate_bandwidth
 
+    X_red_sample = X_red[:min(size, 1000)]
+    bandwidth = estimate_bandwidth(X_red_sample, quantile=0.2)
+    print "Clustering with bandwidth:", bandwidth
 
-  X_red_sample = X_red[:min(size, 1000)]
-  bandwidth = estimate_bandwidth(X_red_sample, quantile=0.2)
-  print "Clustering with bandwidth:", bandwidth
+    #X_red = np.vstack((X_red,X_red_valid))
+    #X_red_next = np.vstack((X_red_next,X_red_valid_next))
+    #labels = labels + valid_labels
 
-  #X_red = np.vstack((X_red,X_red_valid))
-  #X_red_next = np.vstack((X_red_next,X_red_valid_next))
-  #labels = labels + valid_labels
+    print X_red.shape, len(X_red), len(labels)
+    # print valid_labels
 
-  print X_red.shape, len(X_red), len(labels)
-  #print valid_labels
+    af = MeanShift(bandwidth=bandwidth / 1).fit(X_red)
 
-  af = MeanShift(bandwidth=bandwidth/1).fit(X_red)
+    cluster_centers = af.cluster_centers_
+    cluster_labels = af.labels_
+    n_clusters = len(cluster_centers)
 
-  cluster_centers = af.cluster_centers_
-  cluster_labels = af.labels_
-  n_clusters = len(cluster_centers)
-  
-  plt.figure()
-  for ([x,y],label, cluster_label) in zip(X_red,labels, cluster_labels):
-  #for ([x,y],label, cluster_label) in sample(zip(X_red,labels, cluster_labels), min(size, 1000)):
-    x = gauss(0,0.1) + x
-    y = gauss(0,0.1) + y
-    plt.scatter(x, y, c = colors[cluster_label % ncolors])
-    #print label
-    #if label in valid_labels:
-    #  plt.text(x-0.05, y+0.01, label.split("/")[-1])
+    plt.figure()
+    for ([x, y], label, cluster_label) in zip(X_red, labels, cluster_labels):
+        # for ([x,y],label, cluster_label) in sample(zip(X_red,labels,
+        # cluster_labels), min(size, 1000)):
+        x = gauss(0, 0.1) + x
+        y = gauss(0, 0.1) + y
+        plt.scatter(x, y, c=colors[cluster_label % ncolors])
+        # print label
+        # if label in valid_labels:
+        #  plt.text(x-0.05, y+0.01, label.split("/")[-1])
 
-  for i,[x,y] in enumerate(cluster_centers):
-    plt.plot(x, y, 'o', markerfacecolor=colors[i % ncolors],
-             markeredgecolor='k', markersize=7)
+    for i, [x, y] in enumerate(cluster_centers):
+        plt.plot(x, y, 'o', markerfacecolor=colors[i % ncolors],
+                 markeredgecolor='k', markersize=7)
 
-  """
+    """
   #for prog,[x,y] in zip(valid_labels, X_red_valid):
     #x = gauss(0,0.1) + x
     #y = gauss(0,0.1) + y
@@ -193,14 +205,14 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
   #plt.savefig("clusters.png")
   plt.show()
   """
-  plt.savefig(train_file.replace(".gz","")+".clusters.png")
+    plt.savefig(train_file.replace(".gz", "") + ".clusters.png")
 
-  clustered_traces = zip(labels, cluster_labels)
-  writer = open_csv(train_file.replace(".gz","")+".clusters")
-  for label, cluster in clustered_traces:
-     writer.writerow([label, cluster])
+    clustered_traces = zip(labels, cluster_labels)
+    writer = open_csv(train_file.replace(".gz", "") + ".clusters")
+    for label, cluster in clustered_traces:
+        writer.writerow([label, cluster])
 
-  """
+    """
 
   clusters = dict()
   for label, cluster in clustered_traces:
@@ -240,46 +252,56 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
     #plt.savefig('cluster-%d.png' % cluster)
   """
 
-  #return clustered_traces
+    # return clustered_traces
 
 
 def TrainCnn(model_file, train_file, valid_file, ftype, nsamples):
 
-  csvreader = open_csv(train_file)
+    csvreader = open_csv(train_file)
 
-  train_features = []
-  train_programs = []
-  train_classes = []
+    train_features = []
+    train_programs = []
+    train_classes = []
 
-  train_programs, train_features, train_classes = read_traces(train_file, nsamples, cut=None)
-  train_size = len(train_features)
+    train_programs, train_features, train_classes = read_traces(
+        train_file, nsamples, cut=None)
+    train_size = len(train_features)
 
-  from keras.preprocessing.text import Tokenizer
+    from keras.preprocessing.text import Tokenizer
 
-  tokenizer = Tokenizer(nb_words=None, filters="", lower=False, split=" ")
-  #print type(train_features[0])
-  tokenizer.fit_on_texts(train_features)
-  max_features = len(tokenizer.word_counts)
+    tokenizer = Tokenizer(nb_words=None, filters="", lower=False, split=" ")
+    # print type(train_features[0])
+    tokenizer.fit_on_texts(train_features)
+    max_features = len(tokenizer.word_counts)
 
-  preprocessor = DeepReprPreprocessor(tokenizer, window_size, batch_size)
-  X_train,y_train = preprocessor.preprocess(train_features, 10000)
-  nb_classes = len(preprocessor.classes)
-  print preprocessor.classes
+    preprocessor = DeepReprPreprocessor(tokenizer, window_size, batch_size)
+    X_train, y_train = preprocessor.preprocess(train_features, 10000)
+    nb_classes = len(preprocessor.classes)
+    print preprocessor.classes
 
-  model = make_cluster_cnn("train", max_features, maxlen, embedding_dims, nb_filters, filter_length, hidden_dims, nb_classes)
-  model.fit(X_train, y_train, validation_split=0.1, batch_size=batch_size, nb_epoch=nb_epoch, show_accuracy=True)
+    model = make_cluster_cnn(
+        "train",
+        max_features,
+        maxlen,
+        embedding_dims,
+        nb_filters,
+        filter_length,
+        hidden_dims,
+        nb_classes)
+    model.fit(X_train, y_train, validation_split=0.1,
+              batch_size=batch_size, nb_epoch=nb_epoch, show_accuracy=True)
 
-  model.mypreprocessor = preprocessor
-  #model_file = model_file + ".wei"
-  #modelfile = open_model(model_file)
-  print "Saving model to",model_file + ".wei"
-  model.save_weights(model_file + ".wei")
+    model.mypreprocessor = preprocessor
+    #model_file = model_file + ".wei"
+    #modelfile = open_model(model_file)
+    print "Saving model to", model_file + ".wei"
+    model.save_weights(model_file + ".wei")
 
-  #model_file = model_file + ".pre"
-  modelfile = open_model(model_file + ".pre")
-  print "Saving preprocessor to",model_file + ".pre"
-  #model.save_weights(model_file)
-  modelfile.write(pickle.dumps(preprocessor, protocol=2))
+    #model_file = model_file + ".pre"
+    modelfile = open_model(model_file + ".pre")
+    print "Saving preprocessor to", model_file + ".pre"
+    # model.save_weights(model_file)
+    modelfile.write(pickle.dumps(preprocessor, protocol=2))
 
 """
 def ClusterDoc2Vec(model_file, train_file, valid_file, ftype, nsamples, param):
@@ -294,7 +316,7 @@ def ClusterDoc2Vec(model_file, train_file, valid_file, ftype, nsamples, param):
 
   print "Vectorizing traces.."
   sentences = []
-  
+
   for (prog,trace) in zip(train_programs,train_features):
      sentences.append(TaggedDocument(trace.split(" "), [prog]))
 
@@ -333,7 +355,7 @@ def ClusterDoc2Vec(model_file, train_file, valid_file, ftype, nsamples, param):
     except ValueError:
         plt.text(x, y+0.02, cl)
 
-  #plt.show() 
+  #plt.show()
   plt.savefig(train_file.replace(".gz","")+".png")
 
   from sklearn.cluster import MeanShift, estimate_bandwidth
@@ -372,126 +394,135 @@ def ClusterDoc2Vec(model_file, train_file, valid_file, ftype, nsamples, param):
 
 """
 
-def ClusterScikit(model_file, train_file, valid_file, ftype, nsamples, vectorizer, reducer, param):
 
-  train_programs, train_features, train_classes = read_traces(train_file, nsamples)
-  train_size = len(train_programs)
-  print "using", train_size,"examples to train."
+def ClusterScikit(
+        model_file,
+        train_file,
+        valid_file,
+        ftype,
+        nsamples,
+        vectorizer,
+        reducer,
+        param):
 
-  if vectorizer == "bow":
- 
-    train_dict = dict()
-    train_dict[ftype] = train_features
-    #batch_size = 16
-    #window_size = 20
+    train_programs, train_features, train_classes = read_traces(
+        train_file, nsamples)
+    train_size = len(train_programs)
+    print "using", train_size, "examples to train."
 
-    print "Transforming data and fitting model.."
-    model = make_cluster_pipeline_bow(ftype, reducer)
-    X_red = model.fit_transform(train_dict)
+    if vectorizer == "bow":
 
-  elif vectorizer == "doc2vec":
+        train_dict = dict()
+        train_dict[ftype] = train_features
+        #batch_size = 16
+        #window_size = 20
 
-    from gensim.models.doc2vec import TaggedDocument
-    from gensim.models import Doc2Vec
+        print "Transforming data and fitting model.."
+        model = make_cluster_pipeline_bow(ftype, reducer)
+        X_red = model.fit_transform(train_dict)
 
-    print "Vectorizing traces.."
-    sentences = []
-  
-    for (prog,trace) in zip(train_programs,train_features):
-      sentences.append(TaggedDocument(trace.split(" "), [prog]))
+    elif vectorizer == "doc2vec":
 
-    model = Doc2Vec(dm=2, min_count=1, window=5, size=100, sample=1e-4, negative=5, workers=8, iter=1)
-    model.build_vocab(sentences)
+        from gensim.models.doc2vec import TaggedDocument
+        from gensim.models import Doc2Vec
 
-    for epoch in range(20):
-      #print model
-      model.train(sentences)
-      shuffle(sentences)
+        print "Vectorizing traces.."
+        sentences = []
 
-    train_dict = dict()
+        for (prog, trace) in zip(train_programs, train_features):
+            sentences.append(TaggedDocument(trace.split(" "), [prog]))
 
-    vec_train_features = []
-    for prog in train_programs:
-      #print prog, model.docvecs[prog]
-      vec_train_features.append(model.docvecs[prog])
+        model = Doc2Vec(dm=2, min_count=1, window=5, size=100,
+                        sample=1e-4, negative=5, workers=8, iter=1)
+        model.build_vocab(sentences)
 
-    train_dict[ftype] = vec_train_features
+        for epoch in range(20):
+            # print model
+            model.train(sentences)
+            shuffle(sentences)
 
-    print "Transforming data and fitting model.."
-    model = make_cluster_pipeline_doc2vec(ftype, reducer)
-    X_red = model.fit_transform(train_dict)
+        train_dict = dict()
 
+        vec_train_features = []
+        for prog in train_programs:
+            # print prog, model.docvecs[prog]
+            vec_train_features.append(model.docvecs[prog])
 
-  #pl.rcParams.update({'font.size': 10})
-  if type(X_red) == list:
-    X_red = np.vstack(X_red)
-    print X_red.shape 
+        train_dict[ftype] = vec_train_features
 
-  if X_red.shape[1] == 2:
+        print "Transforming data and fitting model.."
+        model = make_cluster_pipeline_doc2vec(ftype, reducer)
+        X_red = model.fit_transform(train_dict)
 
-    plt.figure()
-    colors = 'brgcmykbgrcmykbgrcmykbgrcmyk'
-    ncolors = len(colors)
+    #pl.rcParams.update({'font.size': 10})
+    if isinstance(X_red, list):
+        X_red = np.vstack(X_red)
+        print X_red.shape
 
-    for prog,[x,y],cl in zip(train_programs, X_red, train_classes):
-      x = gauss(0,0.1) + x
-      y = gauss(0,0.1) + y
-      try:
-          plt.scatter(x, y, c=colors[int(cl)])
-          plt.text(x, y+0.02, prog.split("/")[-1])
-      except ValueError:
-          plt.text(x, y+0.02, cl)
-     
-   
+    if X_red.shape[1] == 2:
 
-    if valid_file is not None:
-      valid_programs, valid_features, valid_classes = read_traces(valid_file, None)
-      valid_dict = dict()
-      valid_dict[ftype] = valid_features
+        plt.figure()
+        colors = 'brgcmykbgrcmykbgrcmykbgrcmyk'
+        ncolors = len(colors)
 
-      X_red = model.transform(valid_dict)
-      for prog,[x,y],cl in zip(valid_programs, X_red, valid_classes):
-        x = gauss(0,0.1) + x
-        y = gauss(0,0.1) + y
-        plt.scatter(x, y, c=colors[cl+1])
-        plt.text(x, y+0.02, prog.split("/")[-1])
+        for prog, [x, y], cl in zip(train_programs, X_red, train_classes):
+            x = gauss(0, 0.1) + x
+            y = gauss(0, 0.1) + y
+            try:
+                plt.scatter(x, y, c=colors[int(cl)])
+                plt.text(x, y + 0.02, prog.split("/")[-1])
+            except ValueError:
+                plt.text(x, y + 0.02, cl)
 
-    #plt.show()
-    plt.savefig(train_file.replace(".gz","")+".png")
+        if valid_file is not None:
+            valid_programs, valid_features, valid_classes = read_traces(
+                valid_file, None)
+            valid_dict = dict()
+            valid_dict[ftype] = valid_features
 
+            X_red = model.transform(valid_dict)
+            for prog, [x, y], cl in zip(valid_programs, X_red, valid_classes):
+                x = gauss(0, 0.1) + x
+                y = gauss(0, 0.1) + y
+                plt.scatter(x, y, c=colors[cl + 1])
+                plt.text(x, y + 0.02, prog.split("/")[-1])
 
-  from sklearn.cluster import MeanShift, estimate_bandwidth
+        # plt.show()
+        plt.savefig(train_file.replace(".gz", "") + ".png")
 
-  bandwidth = estimate_bandwidth(X_red, quantile=0.2)
-  print "Clustering with bandwidth:", bandwidth
+    from sklearn.cluster import MeanShift, estimate_bandwidth
 
-  af = MeanShift(bandwidth=bandwidth*param).fit(X_red)
+    bandwidth = estimate_bandwidth(X_red, quantile=0.2)
+    print "Clustering with bandwidth:", bandwidth
 
-  cluster_centers = af.cluster_centers_
-  labels = af.labels_
-  n_clusters_ = len(cluster_centers)
+    af = MeanShift(bandwidth=bandwidth * param).fit(X_red)
 
-  if X_red.shape[1] == 2:
+    cluster_centers = af.cluster_centers_
+    labels = af.labels_
+    n_clusters_ = len(cluster_centers)
 
-    plt.close('all')
-    plt.figure(1)
-    plt.clf()
+    if X_red.shape[1] == 2:
 
-    for ([x,y],label, cluster_label) in zip(X_red,train_programs, labels):
-      x = gauss(0,0.1) + x
-      y = gauss(0,0.1) + y
-      plt.scatter(x, y, c = colors[cluster_label % ncolors])
+        plt.close('all')
+        plt.figure(1)
+        plt.clf()
 
-    for i,[x,y] in enumerate(cluster_centers):
-      plt.plot(x, y, 'o', markerfacecolor=colors[i % ncolors],
-               markeredgecolor='k', markersize=7)
+        for ([x, y], label, cluster_label) in zip(
+                X_red, train_programs, labels):
+            x = gauss(0, 0.1) + x
+            y = gauss(0, 0.1) + y
+            plt.scatter(x, y, c=colors[cluster_label % ncolors])
 
-    plt.title('Estimated number of clusters: %d' % n_clusters_)
-    plt.savefig(train_file.replace(".gz","")+".clusters.png")
+        for i, [x, y] in enumerate(cluster_centers):
+            plt.plot(x, y, 'o', markerfacecolor=colors[i % ncolors],
+                     markeredgecolor='k', markersize=7)
 
-  #plt.show()
+        plt.title('Estimated number of clusters: %d' % n_clusters_)
+        plt.savefig(train_file.replace(".gz", "") + ".clusters.png")
 
-  clustered_traces = zip(train_programs, labels)
-  writer = write_csv(train_file.replace(".gz","")+".clusters")
-  for label, cluster in clustered_traces:
-     writer.writerow([label.split("/")[-1], cluster])
+    # plt.show()
+
+    clustered_traces = zip(train_programs, labels)
+    writer = write_csv(train_file.replace(".gz", "") + ".clusters")
+    for label, cluster in clustered_traces:
+        writer.writerow([label.split("/")[-1], cluster])

@@ -17,94 +17,96 @@ along with VDISCOVER. If not, see <http://www.gnu.org/licenses/>.
 Copyright 2014 by G.Grieco
 """
 
+
 class MemoryMaps:
-  def __init__(self, path, pid):
-    self.path = str(path)
-    self.pid  = pid
-    self.update()
 
-  def update(self):
+    def __init__(self, path, pid):
+        self.path = str(path)
+        self.pid = pid
+        self.update()
 
-    self.mm = dict()
-    self.atts = dict()
+    def update(self):
 
-    for line in open('/proc/'+str(self.pid)+'/maps'):
-      line = line.replace("\n", "")
-      #print line
-      x = line.split(" ")
+        self.mm = dict()
+        self.atts = dict()
 
-      mrange = x[0].split("-")
-      mrange = map(lambda s: int(s, 16), mrange)
-      #print tuple(mrange)
+        for line in open('/proc/' + str(self.pid) + '/maps'):
+            line = line.replace("\n", "")
+            # print line
+            x = line.split(" ")
 
-      self.mm[tuple(mrange)] = x[-1]
-      self.atts[tuple(mrange)] = x[1]
+            mrange = x[0].split("-")
+            mrange = map(lambda s: int(s, 16), mrange)
+            # print tuple(mrange)
 
-  def isStackPtr(self, ptr):
-    for (mrange,zone) in self.mm.items():
-      if ptr >= mrange[0] and ptr < mrange[1]:
-          return zone == "[stack]"
-    return False
+            self.mm[tuple(mrange)] = x[-1]
+            self.atts[tuple(mrange)] = x[1]
 
-  def isHeapPtr(self, ptr):
-    for (mrange,zone) in self.mm.items():
-      if ptr >= mrange[0] and ptr < mrange[1]:
-          return zone == "[heap]"
-    return False
+    def isStackPtr(self, ptr):
+        for (mrange, zone) in self.mm.items():
+            if ptr >= mrange[0] and ptr < mrange[1]:
+                return zone == "[stack]"
+        return False
 
-  def isCodePtr(self, ptr):
-    for (mrange,zone) in self.mm.items():
-      if ptr >= mrange[0] and ptr < mrange[1] and 'x' in self.atts[mrange]:
-          return True
-    return False
+    def isHeapPtr(self, ptr):
+        for (mrange, zone) in self.mm.items():
+            if ptr >= mrange[0] and ptr < mrange[1]:
+                return zone == "[heap]"
+        return False
 
-  def isLibPtr(self, ptr):
-    for (mrange,zone) in self.mm.items():
-      if ptr >= mrange[0] and ptr < mrange[1]:
-          return "/lib/" in zone
-    return False
+    def isCodePtr(self, ptr):
+        for (mrange, zone) in self.mm.items():
+            if ptr >= mrange[0] and ptr < mrange[
+                    1] and 'x' in self.atts[mrange]:
+                return True
+        return False
 
-  def isGlobalPtr(self, ptr):
-    for (mrange,zone) in self.mm.items():
-      if ptr >= mrange[0] and ptr < mrange[1]:
-          return zone == self.path
-    return False
+    def isLibPtr(self, ptr):
+        for (mrange, zone) in self.mm.items():
+            if ptr >= mrange[0] and ptr < mrange[1]:
+                return "/lib/" in zone
+        return False
 
-  def isFilePtr(self, ptr):
-    for (mrange,zone) in self.mm.items():
-      if ptr >= mrange[0] and ptr < mrange[1]:
-          return zone == ""
-    return False
+    def isGlobalPtr(self, ptr):
+        for (mrange, zone) in self.mm.items():
+            if ptr >= mrange[0] and ptr < mrange[1]:
+                return zone == self.path
+        return False
 
-  def checkPtr(self, ptr, update=True):
-    for (mrange,zone) in self.mm.items():
-      if ptr >= mrange[0] and ptr < mrange[1]:
-          return True
+    def isFilePtr(self, ptr):
+        for (mrange, zone) in self.mm.items():
+            if ptr >= mrange[0] and ptr < mrange[1]:
+                return zone == ""
+        return False
 
-    if update:
-      self.update()
-    else:
-      return False
+    def checkPtr(self, ptr, update=True):
+        for (mrange, zone) in self.mm.items():
+            if ptr >= mrange[0] and ptr < mrange[1]:
+                return True
 
-    return self.checkPtr(ptr, update=False)
+        if update:
+            self.update()
+        else:
+            return False
 
-  def findModule(self, ptr):
-    for (mrange,zone) in self.mm.items():
-      if ptr >= mrange[0] and ptr < mrange[1]:
-        return str(zone)
-    return None
+        return self.checkPtr(ptr, update=False)
 
-  def __str__(self):
-    r = ""
-    for (mrange,zone) in self.mm.items():
-      r = r + hex(mrange[0])+" - "+hex(mrange[1])+" -> "+zone+"\n"
-    return r
+    def findModule(self, ptr):
+        for (mrange, zone) in self.mm.items():
+            if ptr >= mrange[0] and ptr < mrange[1]:
+                return str(zone)
+        return None
 
-  def items(self):
-    r = []
-    for (x,y) in self.mm.items():
-      r.append((x,y,self.atts[x]))
+    def __str__(self):
+        r = ""
+        for (mrange, zone) in self.mm.items():
+            r = r + hex(mrange[0]) + " - " + \
+                hex(mrange[1]) + " -> " + zone + "\n"
+        return r
 
-    return r
+    def items(self):
+        r = []
+        for (x, y) in self.mm.items():
+            r.append((x, y, self.atts[x]))
 
-
+        return r
