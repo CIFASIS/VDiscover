@@ -232,6 +232,8 @@ class RandomInputMutator:
         self.i = 0
         self.inputs = map(mutator, inputs)
         self.inputs_len = len(self.inputs)
+        self.symb_inputs = filter(lambda x: x[1].input.isSymbolic(), enumerate(self.inputs))
+        self.symb_inputs_len = len(self.symb_inputs)
 
     def __iter__(self):
         return self
@@ -239,11 +241,8 @@ class RandomInputMutator:
     def next(self, mutate=True):
         r = []
         delta = None
-        symb_inputs = filter(lambda __x: __x[1].input.isSymbolic(
-        ) and __x[1].input.GetType() == "file", enumerate(self.inputs))
-        symb_inputs_len = len(symb_inputs)
 
-        self.i = symb_inputs[random.randrange(symb_inputs_len)][0]
+        self.i = self.symb_inputs[random.randrange(self.symb_inputs_len)][0]
 
         for j, m in enumerate(self.inputs):
             if self.i == j:
