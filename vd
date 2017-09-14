@@ -96,7 +96,7 @@ if __name__ == "__main__":
             # print "Processing directory ","./"++("/".join(y)), "with",
             # nfiles, "seeds"
             for f in files:
-                all_files.append(x + "/".join(y) + f)
+                all_files.append(x + "/".join(y) + "/" + f)
 
         random.shuffle(all_files)
         nfiles = len(all_files)
@@ -106,9 +106,14 @@ if __name__ == "__main__":
             progress = round(float(progress) / nfiles, 4)
             update_progress(progress)
             prepared_cmd = cmd.replace(program, "")
-            prepared_cmd = prepared_cmd.split("@@")
-            prepared_cmd = prepared_cmd[0].split(
-                " ") + [testcase] + prepared_cmd[1].split(" ")
+            if "@@" in prepared_cmd:
+                prepared_cmd = prepared_cmd.split("@@")
+                prepared_cmd = prepared_cmd[0].split(
+                    " ") + [testcase] + prepared_cmd[1].split(" ")
+            else:
+               prepared_cmd = [prepared_cmd ,"< "+testcase]
+               #print(prepared_cmd)
+ 
             prepared_cmd = filter(lambda x: x != '', prepared_cmd)
             # print "Getting data.."
             events = app.getData(prepared_cmd)
